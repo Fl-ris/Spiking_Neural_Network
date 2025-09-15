@@ -3,34 +3,30 @@ package floris;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.knowm.xchart.*;
-import java.util.List;
 import java.util.Vector;
-import java.util.stream.IntStream;
 
 public class SNN {
-    byte potentialThreshold = -50;
-    byte restMembranePotential = -65;
-    byte membraneResistance = 10; // Weerstand van membraan in mega Ohm.
-    double input = 2;
+    // LIF neuron parameters:
+    private byte potentialThreshold = -50;
+    private byte restMembranePotential = -65;
+    private byte membraneResistance = 10; // Weerstand van membraan in mega Ohm.
+    private byte initialMembranePotential = 60;
+    private byte membraneLeak = 10; // 10 ms
 
-    double initialMembranePotential = 60;
-    double dv;
-    double v;
+    private double dv;
+    private double v = initialMembranePotential; // Initialiseer v met de waarde van initialMembranePotential.
 
-    int membraneLeak = 10; // 10 ms
-    int neurons = 5;
+    // Simulatie parameters
+    private float dt = 0.1F;
+    public int simulationTime = 10;
+    private float simSteps = simulationTime / dt;
+    private double input = 1; // Test
+    private int neurons = 10;
 
-    double dt = 0.1;
-    int simulationTime = 1000;
-    double simSteps = simulationTime / dt;
 
-    int[][] spikeArray;
+    boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
+    double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
 
-    double[][] test = new double[neurons][neurons];
-
-    public SNN(){
-        this.v = initialMembranePotential;
-    }
 
     public static void main(String[] args) {
         SNN network = new SNN();
@@ -38,9 +34,11 @@ public class SNN {
 
         Vector<Double> vList = new Vector<>();
 
-            for (int i = 0; i < network.simSteps; i++) {
-            network.LIFneuron(null);
+        for (int i = 0; i < network.simSteps; i++) {
+            network.LIFneuron();
+            boolean fire = network.SpikeDetector(network.v);
             vList.add(network.v);
+            System.out.println("Fire: " + fire);
     }
 
         int n = vList.size();
@@ -50,29 +48,63 @@ public class SNN {
             yData[i] = vList.get(i);
             xData[i] = i * network.dt;
         }
+
         plotter(xData, yData);
 
+
+        //populateArrays(network.synapses);
     }
 
-    public void LIFneuron(String[] args) {
+
+    public void LIFneuron() {
         dv = (((-v - restMembranePotential) + membraneResistance * input)
                 / membraneLeak) * dt;
 
         v = dv + v;
-        System.out.println(v);
     }
 
 
     public static void plotter(double[] xData, double[] yData) {
-        XYChart chart = QuickChart.getChart(
-                "Membrane Potential (LIF neuron)",
-                "Time (ms)", "V (mV)",
-                "V(t)", xData, yData);
+        /**
+         * Plot het verloop van het membraan potentiaal over tijd.
+         * @param xData
+         * @param yData
+         *
+         */
 
-        chart.getStyler().setLegendVisible(false);
-        chart.getStyler().setMarkerSize(4);
-
+        XYChart chart = QuickChart.getChart("Membraan Potentiaal", "Tijd (ms)", "V (mV)", "V(t)", xData, yData);
         new SwingWrapper<>(chart).displayChart();
+    }
+
+    public boolean SpikeDetector(double v) {
+        /**
+         * Return boolean voor elke tijdstap of de neuron gevuurd heeft.
+         * @param v Membraan potentiaal
+         * @return boolean
+         */
+        if (v > potentialThreshold) {
+            this.v = restMembranePotential;
+            return true;
+        }
+    return false;
+    }
+
+    public double[][] populateArrays(double[][] synapses ) {
+        /**
+         * Maak de verbindingen tussen neuronen in de "synapses" array.
+         */
+        for (int i = 0; i < neurons; i++) {
+            for (int j = 0; j < neurons; j++) {
+                if(i == j){ // Maak geen verbinding met zichzelf...
+                    continue;
+                }
+                synapses[i][j] = 1;
+
+            }
+
+        }
+
+        return synapses;
     }
 
 
