@@ -1,10 +1,11 @@
 package floris;
-
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
+import java.util.ArrayList;
 import org.knowm.xchart.*;
-import java.util.Vector;
-
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 public class SNN {
     // LIF neuron parameters:
@@ -20,9 +21,9 @@ public class SNN {
     // Simulatie parameters
     private float dt = 0.1F;
     public int simulationTime = 10;
-    private float simSteps = simulationTime / dt;
+    public float simSteps = simulationTime / dt;
     private double input[];
-    private int neurons = 10;
+    public int neurons = 100;
 
     boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
     double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
@@ -30,7 +31,7 @@ public class SNN {
 
     public SNN() {
         synapses = new double[neurons][neurons];
-        spikes = new boolean[(int)simSteps][neurons];
+        spikes = new boolean[(int) simSteps][neurons];
         v = new double[neurons];
         dv = new double[neurons];
         input = new double[neurons];
@@ -43,30 +44,7 @@ public class SNN {
 
 
     public static void main(String[] args) {
-        SNN network = new SNN();
 
-        network.populateArrays(network.synapses);
-
-
-        for (int i = 0; i < network.simSteps; i++) {
-            for (int j = 0; j < network.neurons; j++) {
-                network.LIFneuron(j);
-                boolean fire = network.SpikeDetector(j);
-                network.spikes[i][j] = fire;
-
-                if(fire){
-                    network.propagateSpike(j);
-                }
-            }
-    }
-
-        for(double[] i : network.synapses){
-            for (double d : i) {
-                System.out.println("d = " + d);
-            }
-        }
-
-        plotter(network.synapses);
 
     }
 
@@ -86,9 +64,9 @@ public class SNN {
          * @param yData
          *
          */
-        new SwingWrapper<>(QuickChart.getChart("Plot","x","y","data",
-                Arrays.stream(data).mapToDouble(p->p[0]).toArray(),
-                Arrays.stream(data).mapToDouble(p->p[1]).toArray()
+        new SwingWrapper<>(QuickChart.getChart("Plot", "x", "y", "data",
+                Arrays.stream(data).mapToDouble(p -> p[0]).toArray(),
+                Arrays.stream(data).mapToDouble(p -> p[1]).toArray()
         )).displayChart();
     }
 
@@ -103,12 +81,13 @@ public class SNN {
             v[index] = restMembranePotential;
             return true;
         }
-    return false;
+        return false;
     }
+
 
     public void propagateSpike(int preSynapticNeuron) {
 
-        for(int postSynapticNeuron = 0; postSynapticNeuron < neurons; postSynapticNeuron++) {
+        for (int postSynapticNeuron = 0; postSynapticNeuron < neurons; postSynapticNeuron++) {
 
             if (preSynapticNeuron != postSynapticNeuron) { // Mag niet met zichzelf verbinden...
                 input[postSynapticNeuron] += synapses[preSynapticNeuron][postSynapticNeuron];
@@ -124,7 +103,7 @@ public class SNN {
          */
         for (int i = 0; i < neurons; i++) {
             for (int j = 0; j < neurons; j++) {
-                if(i == j){ // Maak geen verbinding met zichzelf...
+                if (i == j) { // Maak geen verbinding met zichzelf...
                     continue;
                 }
                 synapses[i][j] = 1;
@@ -133,7 +112,6 @@ public class SNN {
         }
         return synapses;
     }
-
 
 
 }
