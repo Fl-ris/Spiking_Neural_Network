@@ -47,7 +47,6 @@ public class SNN {
 
         network.populateArrays(network.synapses);
 
-      //  Vector<Double> vList = new Vector<>();
 
         for (int i = 0; i < network.simSteps; i++) {
             for (int j = 0; j < network.neurons; j++) {
@@ -59,29 +58,15 @@ public class SNN {
                     network.propagateSpike(j);
                 }
             }
-
-           // vList.add(v);
-
-
-
-           // System.out.println("Fire: " + fire);
     }
-
-//        int n = vList.size();
-//        double[] yData = new double[n];
-//        double[] xData = new double[n];
-//        for (int i = 0; i < n; i++) {
-//            yData[i] = vList.get(i);
-//            xData[i] = i * network.dt;
-//        }
-//
-//        plotter(xData, yData);
 
         for(double[] i : network.synapses){
             for (double d : i) {
                 System.out.println("d = " + d);
             }
         }
+
+        plotter(network.synapses);
 
     }
 
@@ -94,15 +79,17 @@ public class SNN {
     }
 
 
-    public static void plotter(double[] xData, double[] yData) {
+    public static void plotter(double[][] data) {
         /**
          * Plot het verloop van het membraan potentiaal over tijd.
          * @param xData
          * @param yData
          *
          */
-        XYChart chart = QuickChart.getChart("Membraan Potentiaal", "Tijd (ms)", "V (mV)", "V(t)", xData, yData);
-        new SwingWrapper<>(chart).displayChart();
+        new SwingWrapper<>(QuickChart.getChart("Plot","x","y","data",
+                Arrays.stream(data).mapToDouble(p->p[0]).toArray(),
+                Arrays.stream(data).mapToDouble(p->p[1]).toArray()
+        )).displayChart();
     }
 
 
@@ -146,8 +133,6 @@ public class SNN {
         }
         return synapses;
     }
-
-
 
 
 
