@@ -1,11 +1,8 @@
 package floris;
-import java.util.List;
+
 import java.util.Arrays;
-import java.util.ArrayList;
 import org.knowm.xchart.*;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
+
 
 public class SNN {
     // LIF neuron parameters:
@@ -19,11 +16,11 @@ public class SNN {
     private double[] v;
 
     // Simulatie parameters
-    private float dt = 0.1F;
+    public float dt = 0.1F;
     public int simulationTime = 10;
     public float simSteps = simulationTime / dt;
     private double input[];
-    public int neurons = 100;
+    public int neurons = 10;
 
     boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
     double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
@@ -50,25 +47,30 @@ public class SNN {
 
 
     public void LIFneuron(int index) {
-        dv[index] = (((-v[index] - restMembranePotential) + membraneResistance * input[index])
+        dv[index] = ((-(v[index] - restMembranePotential) + membraneResistance * input[index])
                 / membraneLeak) * dt;
 
         v[index] = dv[index] + v[index];
     }
 
-
-    public static void plotter(double[][] data) {
-        /**
-         * Plot het verloop van het membraan potentiaal over tijd.
-         * @param xData
-         * @param yData
-         *
-         */
-        new SwingWrapper<>(QuickChart.getChart("Plot", "x", "y", "data",
-                Arrays.stream(data).mapToDouble(p -> p[0]).toArray(),
-                Arrays.stream(data).mapToDouble(p -> p[1]).toArray()
-        )).displayChart();
+    public void resetInputs() {
+        for (int i = 0; i < neurons ; i++) {
+            input[1] = 0;
+        }
     }
+
+//    public static void plotter(double[][] data) {
+//        /**
+//         * Plot het verloop van het membraan potentiaal over tijd.
+//         * @param xData
+//         * @param yData
+//         *
+//         */
+//        new SwingWrapper<>(QuickChart.getChart("Plot", "x", "y", "data",
+//                Arrays.stream(data).mapToDouble(p -> p[0]).toArray(),
+//                Arrays.stream(data).mapToDouble(p -> p[1]).toArray()
+//        )).displayChart();
+//    }
 
 
     public boolean SpikeDetector(int index) {
@@ -112,6 +114,5 @@ public class SNN {
         }
         return synapses;
     }
-
 
 }

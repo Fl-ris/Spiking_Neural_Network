@@ -22,7 +22,12 @@ public class Main {
                     network.propagateSpike(j);
                 }
             }
+
+            network.resetInputs();
         }
+
+
+        //network.synapses[1][2] = 1;
 
         // Plot een heatmap van het netwerk.
         heatmap.plot((network.synapses));
