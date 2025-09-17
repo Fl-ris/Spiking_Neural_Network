@@ -5,27 +5,41 @@ import java.util.Arrays;
 import org.knowm.xchart.*;
 import java.util.Vector;
 
+
 public class SNN {
     // LIF neuron parameters:
     private byte potentialThreshold = -50;
     private byte restMembranePotential = -65;
     private byte membraneResistance = 10; // Weerstand van membraan in mega Ohm.
-    private byte initialMembranePotential = 60;
+    private byte initialMembranePotential = -60;
     private byte membraneLeak = 10; // 10 ms
 
-    private double dv;
-    private double v = initialMembranePotential; // Initialiseer v met de waarde van initialMembranePotential.
+    private double[] dv;
+    private double[] v;
 
     // Simulatie parameters
     private float dt = 0.1F;
     public int simulationTime = 10;
     private float simSteps = simulationTime / dt;
-    private double input = 1; // Test
+    private double input[];
     private int neurons = 10;
-
 
     boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
     double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
+
+
+    public SNN() {
+        synapses = new double[neurons][neurons];
+        spikes = new boolean[(int)simSteps][neurons];
+        v = new double[neurons];
+        dv = new double[neurons];
+        input = new double[neurons];
+
+        for (int i = 0; i < neurons; i++) {
+            v[i] = initialMembranePotential;
+            input[i] = 1;
+        }
+    }
 
 
     public static void main(String[] args) {
@@ -38,6 +52,7 @@ public class SNN {
             network.LIFneuron();
             boolean fire = network.SpikeDetector(network.v);
             vList.add(network.v);
+
             System.out.println("Fire: " + fire);
     }
 
@@ -51,8 +66,14 @@ public class SNN {
 
         plotter(xData, yData);
 
+        network.populateArrays(network.synapses);
 
-        //populateArrays(network.synapses);
+        for(double[] i : network.synapses){
+            for (double d : i) {
+                System.out.println("d = " + d);
+            }
+        }
+
     }
 
 
@@ -71,10 +92,10 @@ public class SNN {
          * @param yData
          *
          */
-
         XYChart chart = QuickChart.getChart("Membraan Potentiaal", "Tijd (ms)", "V (mV)", "V(t)", xData, yData);
         new SwingWrapper<>(chart).displayChart();
     }
+
 
     public boolean SpikeDetector(double v) {
         /**
@@ -82,12 +103,13 @@ public class SNN {
          * @param v Membraan potentiaal
          * @return boolean
          */
-        if (v > potentialThreshold) {
+        if (v >= potentialThreshold) {
             this.v = restMembranePotential;
             return true;
         }
     return false;
     }
+
 
     public double[][] populateArrays(double[][] synapses ) {
         /**
@@ -101,11 +123,11 @@ public class SNN {
                 synapses[i][j] = 1;
 
             }
-
         }
-
         return synapses;
     }
+
+
 
 
 
