@@ -1,8 +1,5 @@
 package floris;
 
-import java.util.Arrays;
-import org.knowm.xchart.*;
-
 
 public class SNN {
     // LIF neuron parameters:
@@ -11,6 +8,7 @@ public class SNN {
     private byte membraneResistance = 10; // Weerstand van membraan in mega Ohm.
     private byte initialMembranePotential = -60;
     private byte membraneLeak = 10; // 10 ms
+    public double[][] vHistory;
 
     private double[] dv;
     private double[] v;
@@ -20,7 +18,7 @@ public class SNN {
     public int simulationTime = 10;
     public float simSteps = simulationTime / dt;
     private double input[];
-    public int neurons = 10;
+    public int neurons = 50;
 
     boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
     double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
@@ -32,6 +30,7 @@ public class SNN {
         v = new double[neurons];
         dv = new double[neurons];
         input = new double[neurons];
+        vHistory = new double[(int) simSteps][neurons];
 
         for (int i = 0; i < neurons; i++) {
             v[i] = initialMembranePotential;
@@ -55,7 +54,7 @@ public class SNN {
 
     public void resetInputs() {
         for (int i = 0; i < neurons ; i++) {
-            input[1] = 0;
+            input[1] = 10;
         }
     }
 
@@ -113,6 +112,10 @@ public class SNN {
             }
         }
         return synapses;
+    }
+
+    public void recordVoltage(int timeStep, int neuronIndex) {
+        vHistory[timeStep][neuronIndex] = v[neuronIndex];
     }
 
 }
