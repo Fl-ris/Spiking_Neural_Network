@@ -27,10 +27,9 @@ public class Main {
                 if (t % 4 == 0) {
                     network.externalCurrent[t][2] = 20;
                 }
-
-
-
-
+                if (t % 5 == 0) {
+                    network.externalCurrent[t][3] = 20;
+                }
 
             }
 

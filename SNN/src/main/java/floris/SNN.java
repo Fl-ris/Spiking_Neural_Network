@@ -3,6 +3,7 @@ package floris;
 
 import java.util.Random;
 
+
 public class SNN {
     // LIF neuron parameters:
     private byte potentialThreshold = -50;
@@ -21,12 +22,14 @@ public class SNN {
     public float simSteps = simulationTime / dt;
     private double input[];
     public int neurons = 100;
+    public int inhibitoryNeurons = 10; // Neuronen die een inhiberend signaal geven.
 
     boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
     double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
 
     public boolean[] isInput; // Index die aangeeft of een neuron input is.
-    public boolean[] isOutput; // Index die aanageeft of een neuron een output is.
+    public boolean[] isOutput; // Index die aangeeft of een neuron een output is.
+    public boolean[] isInhibitory; // Index die aangeeft of een neuron inhiberend is.
 
     public int inputNeurons = 4;
     public int outputNeurons = 2;
@@ -43,9 +46,10 @@ public class SNN {
         vHistory = new double[(int) simSteps][neurons];
         isInput = new boolean[neurons];
         isOutput = new boolean[neurons];
+        isInhibitory = new boolean[neurons];
         double[][] externalCurrent = new double[(int) simSteps][inputNeurons];
 
-        // Vul input/output arrays met waarden:
+        // Vul input/output/inhibitory arrays met waarden:
         for (int i = 0; i < inputNeurons; i++) {
             isInput[i]  = true;
         }
@@ -54,16 +58,16 @@ public class SNN {
             isOutput[i] = true;
         }
 
-        // Membraan potentiaal 1 voor alle neuronen.
-        for (int i = 0; i < neurons; i++) {
-            v[i] = initialMembranePotential;
-            input[i] = 0;
+        for (int i = (neurons - (inputNeurons + outputNeurons)) - inhibitoryNeurons; i < neurons; i++) {
+            isInhibitory[i] = true;
+
         }
-    }
 
-
-    public static void main(String[] args) {
-
+//        // Membraan potentiaal 0 voor alle neuronen.
+//        for (int i = 0; i < neurons; i++) {
+//            v[i] = initialMembranePotential;
+//            input[i] = 0;
+//        }
 
     }
 
@@ -80,19 +84,6 @@ public class SNN {
             input[i] = 0;
         }
     }
-
-//    public static void plotter(double[][] data) {
-//        /**
-//         * Plot het verloop van het membraan potentiaal over tijd.
-//         * @param xData
-//         * @param yData
-//         *
-//         */
-//        new SwingWrapper<>(QuickChart.getChart("Plot", "x", "y", "data",
-//                Arrays.stream(data).mapToDouble(p -> p[0]).toArray(),
-//                Arrays.stream(data).mapToDouble(p -> p[1]).toArray()
-//        )).displayChart();
-//    }
 
 
     public boolean SpikeDetector(int index) {
@@ -131,7 +122,10 @@ public class SNN {
             for (int postsynaptic = 0; postsynaptic < neurons; postsynaptic++) {
                 if (presynaptic == postsynaptic) continue; // Maak geen verbinding met zichzelf...
 
-                synapses[presynaptic][postsynaptic] = rng.nextDouble() * 25; // Vermenigvuldigd met 25 omdat het anders niet sterk genoeg is om te spiken.
+                //synapses[presynaptic][postsynaptic] = rng.nextDouble() * 25; // Vermenigvuldigd met 25 omdat het anders niet sterk genoeg is om te spiken.
+
+                // Als een neuron inhiberend is, gebruik een negatieve waarde:
+                synapses[presynaptic][postsynaptic] = isInhibitory[presynaptic] ? -rng.nextDouble() * 25 : rng.nextDouble() * 25;
 
                 if(isInput[postsynaptic]) {
                     synapses[presynaptic][postsynaptic] = 0; // Geen input voor de input neuronen zelf.
@@ -148,6 +142,7 @@ public class SNN {
     public void recordVoltage(int timeStep, int neuronIndex) {
         vHistory[timeStep][neuronIndex] = v[neuronIndex];
     }
+
 
     public void injectCurrent(double[] current) {
         for (int i = 0 ; i < inputNeurons; i++) {
