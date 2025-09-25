@@ -150,4 +150,21 @@ public class SNN {
         }
     }
 
+    public void step(int i){
+        injectCurrent(externalCurrent[i]);
+
+        for (int j = 0; j < neurons; j++) {
+        LIFneuron(j);
+        boolean fire = SpikeDetector(j);
+        spikes[i][j] = fire;
+        recordVoltage(i, j);
+
+        if (fire) {
+            propagateSpike(j);
+        }
+
+    }
+
+            resetInputs();
+    }
 }
