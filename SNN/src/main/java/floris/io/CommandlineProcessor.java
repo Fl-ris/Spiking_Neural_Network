@@ -16,6 +16,16 @@ public class CommandlineProcessor {
         @CommandLine.Option(names = { "-dt", "--time-step" }, description = "The size of dt for the LIF equation.")
         float dt = 0.1F;
 
+        @CommandLine.Option(names = {"--input-neurons" }, description = "Amount of input neurons.")
+        int inputNeurons = 5;
+
+        @CommandLine.Option(names = {"--output-neurons" }, description = "Amount of output neurons.")
+        int outputNeurons = 5;
+
+        @CommandLine.Option(names = {"--inhibitory-neurons" }, description = "Amount of inhibitory neurons.")
+        int inhibitoryNeurons = 5;
+
+
         @Override
         public void run() {
             System.out.println("test...");
