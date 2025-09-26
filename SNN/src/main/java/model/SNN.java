@@ -5,9 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import static org.apache.datasketches.quantiles.ItemsSketch.rand;
-
-
 public class SNN {
     // LIF neuron parameters:
     private byte potentialThreshold = -50;
@@ -71,10 +68,11 @@ public class SNN {
             v_threshold[i] = potentialThreshold;
         }
 
-//        for (int i = (neurons - (inputNeurons + outputNeurons)) - inhibitoryNeurons; i < neurons - outputNeurons; i++) {
-//            isInhibitory[i] = true;
-//
-//        }
+        // Maak neuronen met de "isInhibitory" index true.
+        for (int i = (neurons - (inputNeurons + outputNeurons)) - inhibitoryNeurons; i < neurons - outputNeurons; i++) {
+            isInhibitory[i] = true;
+
+        }
 
 
         // Test: 20% inhiberende neuronen random toevoegen:
@@ -111,8 +109,8 @@ public class SNN {
 
     public void resetInputs() {
         for (int i = 0; i < neurons ; i++) {
-           // input[i] = input[i] * 0.05; // "Decay" de waarde om het geleidelijk te laten gaan...
-            input[i] = input[i] * Math.exp(-dt / 5);
+            input[i] = input[i] * 0.05; // "Decay" de waarde om het geleidelijk te laten gaan...
+          //  input[i] = input[i] * Math.exp(-dt / 5);
         }
     }
 
@@ -150,64 +148,20 @@ public class SNN {
         }
     }
 
-//    public double[][] populateArrays(double[][] synapses) {
-//        /**
-//         * Maak de verbindingen tussen neuronen in de "synapses" array.
-//         */
-//        Random rng = new Random();
-//
-//        for (int presynaptic = 0; presynaptic < neurons; presynaptic++) {
-//            for (int postsynaptic = 0; postsynaptic < neurons; postsynaptic++) {
-//                if (presynaptic == postsynaptic) continue; // Maak geen verbinding met zichzelf...
-//
-//                //synapses[presynaptic][postsynaptic] = rng.nextDouble() * 25; // Vermenigvuldigd met 25 omdat het anders niet sterk genoeg is om te spiken.
-//
-//                // Als een neuron inhiberend is, gebruik een negatieve waarde:
-//                synapses[presynaptic][postsynaptic] = isInhibitory[presynaptic] ? -rng.nextDouble() * 25 : rng.nextDouble() * 25;
-//
-//                if(isInput[postsynaptic]) {
-//                    synapses[presynaptic][postsynaptic] = 0; // Geen input voor de input neuronen zelf.
-//                }
-//                if(isOutput[presynaptic]) {
-//                    synapses[presynaptic][postsynaptic] = 0; // Geen output voor de output neuronen zelf.
-//                }
-//
-//                }
-//        }
-//        return synapses;
-//    }
-
     public double[][] populateArrays(double[][] synapses) {
+        /**
+         * Maak de verbindingen tussen neuronen in de "synapses" array.
+         */
         Random rng = new Random();
-
-        int gridSize = (int) Math.sqrt(neurons);
-        double sigma = 10;
-        double maxDistance = gridSize * Math.sqrt(2);
 
         for (int presynaptic = 0; presynaptic < neurons; presynaptic++) {
             for (int postsynaptic = 0; postsynaptic < neurons; postsynaptic++) {
-
                 if (presynaptic == postsynaptic) continue; // Maak geen verbinding met zichzelf...
 
-                int preRow = presynaptic / gridSize;
-                int preCol = presynaptic % gridSize;
-                int postRow = postsynaptic / gridSize;
-                int postCol = postsynaptic % gridSize;
+                //synapses[presynaptic][postsynaptic] = rng.nextDouble() * 25; // Vermenigvuldigd met 25 omdat het anders niet sterk genoeg is om te spiken.
 
-                double distance = Math.hypot(postRow - preRow, postCol - preCol);
-
-                double connectionProbability = Math.exp(-(distance * distance) / (2 * sigma * sigma));
-
-                if (rng.nextDouble() < connectionProbability) {
-                    // Als een neuron inhiberend is, gebruik een negatieve waarde:
-                    synapses[presynaptic][postsynaptic] = isInhibitory[presynaptic] ?
-                       //     -rng.nextDouble() * 0.2: rng.nextDouble() * 3;
-                            -rng.nextDouble() * 5: rng.nextDouble() * 10.45;
-                    synapses[presynaptic][postsynaptic] *= connectionProbability;
-                } else {
-
-                    synapses[presynaptic][postsynaptic] = 0;
-                }
+                // Als een neuron inhiberend is, gebruik een negatieve waarde:
+                synapses[presynaptic][postsynaptic] = isInhibitory[presynaptic] ? -rng.nextDouble() * 25 : rng.nextDouble() * 25;
 
                 if(isInput[postsynaptic]) {
                     synapses[presynaptic][postsynaptic] = 0; // Geen input voor de input neuronen zelf.
@@ -215,10 +169,12 @@ public class SNN {
                 if(isOutput[presynaptic]) {
                     synapses[presynaptic][postsynaptic] = 0; // Geen output voor de output neuronen zelf.
                 }
-            }
+
+                }
         }
         return synapses;
     }
+
 
     public void recordVoltage(int timeStep, int neuronIndex) {
         vHistory[timeStep][neuronIndex] = (float) v[neuronIndex];
@@ -241,10 +197,11 @@ public class SNN {
         boolean fire = SpikeDetector(j);
         spikes[i][j] = fire;
         recordVoltage(i, j);
-            if (j == 150 && i > 50) {
-                System.out.printf("Time: %d, Neuron: %d, Fired: %b, V: %.2f, V_thresh: %.2f, Input: %.2f%n",
-                        i, j, fire, v[j], v_threshold[j], input[j]);
+            if (j == 150 && i > 50) { // Debug statement, laat neuron 150 zien:
+              //  System.out.println(i,j,fire,v[j],v_threshold[j],input[j]);
             }
+
+
         if (fire) {
             propagateSpike(j);
         }
