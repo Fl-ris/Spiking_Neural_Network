@@ -2,5 +2,10 @@ package floris.io;
 
 
 public interface ImportedSynapseMatrix {
-    double[][] synapsesMatrix = new double[0][];
+    float dt();
+    int simulationTime();
+    int neurons();
+    int inputNeurons();
+    int outputNeurons();
+    int inhibitoryNeurons();
 }
