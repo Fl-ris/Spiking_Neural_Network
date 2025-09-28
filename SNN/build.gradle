@@ -25,6 +25,14 @@ test {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'floris.Main'
+        //attributes 'Main-Class': 'floris.Main'
+        attributes 'Main-Class': 'floris.io.CommandlineProcessor'
+    }
+}
+
+shadowJar {
+    zip64 true // Om geheugenlimiet omhoog te krijgen...
+    manifest {
+        attributes 'Main-Class': 'floris.io.CommandlineProcessor'
     }
 }

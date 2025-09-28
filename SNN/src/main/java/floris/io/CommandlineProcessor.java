@@ -1,13 +1,13 @@
 package floris.io;
 
 import picocli.CommandLine;
-
+import floris.Main;
 
 public class CommandlineProcessor {
     @CommandLine.Command(name = "SNN", version = "SNN-0.1", mixinStandardHelpOptions = true)
     public static class commandlineProcessor implements Runnable {
 
-        @CommandLine.Option(names = { "-n", "--neuron-amount" }, description = "The amount of neurons for the network.")
+        @CommandLine.Option(names = { "-n", "--neuron-count" }, description = "The number of neurons in the network.")
         int neurons = 50;
 
         @CommandLine.Option(names = { "-t", "--simulation-time" }, description = "The amount of time in ms the SNN should run.")
@@ -28,13 +28,15 @@ public class CommandlineProcessor {
 
         @Override
         public void run() {
-            System.out.println("test...");
-            System.out.println(dt);
+            ImportedSynapseMatrix params = new NetworkParameters(dt, simulationTime, neurons, inputNeurons,outputNeurons,inhibitoryNeurons);
+            Main simulation = new Main();
+            simulation.runNetwork(params);
+
         }
 
-        public static void main(String[] args) {
-            int exitCode = new CommandLine(new commandlineProcessor()).execute(args);
-            System.exit(exitCode);
-        }
+    }
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new commandlineProcessor()).execute(args);
+        System.exit(exitCode);
     }
 }
