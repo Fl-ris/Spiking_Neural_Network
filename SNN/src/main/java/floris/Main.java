@@ -2,7 +2,15 @@ package floris;
 import floris.visualizer.*;
 import model.SNN;
 
+import floris.io.ImportedSynapseMatrix;
+import floris.io.NetworkParameters;
+
 public class Main {
+
+    public void runNetwork(ImportedSynapseMatrix params){
+        System.out.println("Starting the simulation...");
+        System.out.println();
+    }
 
     public static void main(String[] args) {
 
@@ -18,9 +26,9 @@ public class Main {
 
         // Test: Spike de input neuronen automatisch:
         for (int t = 0; t < network.externalCurrent.length; t++) {
-             //   if (t % 1 == 0) {
+             //   if (t % 10 == 0) {
                     for (int i = 0; i < network.inputNeurons; i++){
-                        network.externalCurrent[t][i] = 15;
+                        network.externalCurrent[t][i] = 5;
 
                  //   }
                 }
@@ -33,7 +41,7 @@ public class Main {
 
             // Visualizatie
              heatmap1.update(network.spikes[i], i, network.vHistory);
-             heatmap1.addDelay(3);
+             heatmap1.addDelay(30);
 
         }
     }

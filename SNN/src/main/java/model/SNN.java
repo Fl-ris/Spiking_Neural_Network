@@ -1,5 +1,8 @@
 package model;
 
+import floris.io.ImportedSynapseMatrix;
+import floris.io.NetworkParameters;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,11 +21,11 @@ public class SNN {
     public double[] v;
 
     // Simulatie parameters
-    public float dt = 0.1F;
-    public int simulationTime = 2_0000;
-    public float simSteps = simulationTime / dt;
+    public float dt;
+    public int simulationTime;
+    public float simSteps;
     private double input[];
-    public int neurons = 100*100;
+    public int neurons;
 
     public boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
     public double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
@@ -35,11 +38,11 @@ public class SNN {
     public boolean[] isOutput; // Index die aangeeft of een neuron een output is.
     public boolean[] isInhibitory; // Index die aangeeft of een neuron inhiberend is.
 
-    public int inputNeurons = 20;
-    public int outputNeurons = 4;
-    public int inhibitoryNeurons = (int) (neurons * 0.25); // Neuronen die een inhiberend signaal geven.
+    public int inputNeurons;
+    public int outputNeurons;
+    public int inhibitoryNeurons; // Neuronen die een inhiberend signaal geven.
 
-    public double[][] externalCurrent = new double[(int) simSteps][inputNeurons];
+    public double[][] externalCurrent;
 
     // Test:
     private double[] I_syn;
@@ -47,8 +50,21 @@ public class SNN {
     private double[] refracUntil;
     private double tRef = 2.0;
 
-
     public SNN() {
+        this(new NetworkParameters(0.1F, 200, 210*210, 20, 4, (int)((210*210) * 0.25)));
+    }
+
+    public SNN(ImportedSynapseMatrix params) {
+
+        this.dt = params.dt();
+        this.simulationTime = params.simulationTime();
+        this.neurons = params.neurons();
+        this.inputNeurons = params.inputNeurons();
+        this.outputNeurons = params.outputNeurons();
+        this.inhibitoryNeurons = params.inhibitoryNeurons();
+        this.simSteps = this.simulationTime / this.dt;
+
+
         synapses = new double[neurons][neurons];
         spikes = new boolean[(int) simSteps][neurons];
         v = new double[neurons];
@@ -58,7 +74,7 @@ public class SNN {
         isInput = new boolean[neurons];
         isOutput = new boolean[neurons];
         isInhibitory = new boolean[neurons];
-
+        externalCurrent = new double[(int) simSteps][inputNeurons];
 
         // Vul input/output/inhibitory arrays met waarden:
         for (int i = 0; i < inputNeurons; i++) {
@@ -247,24 +263,60 @@ public class SNN {
     }
 
 
-    public void step(int i){
-        resetInputs();
-        updateThresholds();
-        injectCurrent(externalCurrent[i]);
+//    public void step(int i){
+//        resetInputs();
+//        updateThresholds();
+//        injectCurrent(externalCurrent[i]);
+//
+//        for (int j = 0; j < neurons; j++) {
+//        LIFneuron(j);
+//        boolean fire = SpikeDetector(j);
+//        spikes[i][j] = fire;
+//        recordVoltage(i, j);
+//            if (j == 150 && i > 50) { // Debug statement, laat neuron 150 zien:
+//                System.out.println(i + " " + j + " " + fire + " " + v[j] + " " + v_threshold[j] + " " + input[j]);
+//            }
+//        if (fire) {
+//            propagateSpike(j);
+//        }
+//    }
+//
+//    }
 
-        for (int j = 0; j < neurons; j++) {
+public void step(int i){
+    double tNow = i * dt;
+
+    resetInputs();
+    updateThresholds();
+    injectCurrent(externalCurrent[i]);
+    List<Integer> firedThisStep = new ArrayList<>();
+
+    for (int j = 0; j < neurons; j++) {
+        if (refracUntil[j] > tNow) {
+            v[j] = restMembranePotential;
+            spikes[i][j] = false;
+            recordVoltage(i, j);
+            continue;
+        }
+
         LIFneuron(j);
         boolean fire = SpikeDetector(j);
         spikes[i][j] = fire;
         recordVoltage(i, j);
-            if (j == 150 && i > 50) { // Debug statement, laat neuron 150 zien:
-                System.out.println(i + " " + j + " " + fire + " " + v[j] + " " + v_threshold[j] + " " + input[j]);
-            }
+
         if (fire) {
-            propagateSpike(j);
+            refracUntil[j] = tNow + tRef;
+            firedThisStep.add(j);
+            }
+
+
+        if (j == 10 && i > 50) {
+            System.out.println(i + " " + j + " " + fire + " " + v[j] + " " + v_threshold[j] + " " + I_syn[j]);
         }
     }
 
+    for (int pre : firedThisStep) {
+        propagateSpike(pre);
     }
+} }
 
-}
