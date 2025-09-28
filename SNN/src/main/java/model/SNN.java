@@ -18,29 +18,34 @@ public class SNN {
     public double[] v;
 
     // Simulatie parameters
-
     public float dt = 0.1F;
-    public int simulationTime = 2_00;
+    public int simulationTime = 2_0000;
     public float simSteps = simulationTime / dt;
     private double input[];
-    public int neurons = 20_000;
+    public int neurons = 100*100;
 
     public boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
     public double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
     public double[] v_threshold; // Array voor homeostatic plasiticty
-    private double threshold_adaptation = 0.5;
-    private double threshold_decay = 0.99;
+    private double threshold_adaptation = 5;
+    private double threshold_decay = 0.95;
 
 
     public boolean[] isInput; // Index die aangeeft of een neuron input is.
     public boolean[] isOutput; // Index die aangeeft of een neuron een output is.
     public boolean[] isInhibitory; // Index die aangeeft of een neuron inhiberend is.
 
-    public int inputNeurons = 1;
-    public int outputNeurons = 2;
-    public int inhibitoryNeurons = (int) (neurons * 0.20); // Neuronen die een inhiberend signaal geven.
+    public int inputNeurons = 20;
+    public int outputNeurons = 4;
+    public int inhibitoryNeurons = (int) (neurons * 0.25); // Neuronen die een inhiberend signaal geven.
 
     public double[][] externalCurrent = new double[(int) simSteps][inputNeurons];
+
+    // Test:
+    private double[] I_syn;
+    private double tauSyn = 5.0;
+    private double[] refracUntil;
+    private double tRef = 2.0;
 
 
     public SNN() {
@@ -53,6 +58,7 @@ public class SNN {
         isInput = new boolean[neurons];
         isOutput = new boolean[neurons];
         isInhibitory = new boolean[neurons];
+
 
         // Vul input/output/inhibitory arrays met waarden:
         for (int i = 0; i < inputNeurons; i++) {
@@ -69,11 +75,12 @@ public class SNN {
         }
 
         // Maak neuronen met de "isInhibitory" index true.
-        for (int i = (neurons - (inputNeurons + outputNeurons)) - inhibitoryNeurons; i < neurons - outputNeurons; i++) {
-            isInhibitory[i] = true;
-
-        }
-
+//        for (int i = (neurons - (inputNeurons + outputNeurons)) - inhibitoryNeurons; i < neurons - outputNeurons; i++) {
+//            isInhibitory[i] = true;
+//
+//        }
+        I_syn = new double[neurons];
+        refracUntil = new double[neurons];
 
         // Test: 20% inhiberende neuronen random toevoegen:
         int hiddenStart = inputNeurons;
@@ -101,16 +108,26 @@ public class SNN {
 
 
     public void LIFneuron(int index) {
-        dv[index] = ((-(v[index] - restMembranePotential) + membraneResistance * input[index])
+        dv[index] = ((-(v[index] - restMembranePotential) + membraneResistance * I_syn[index])
                 / membraneLeak) * dt;
 
         v[index] = dv[index] + v[index];
     }
 
+
+//    public void resetInputs() {
+//        for (int i = 0; i < neurons ; i++) {
+//            //input[i] = input[i] * 0.05; // "Decay" de waarde om het geleidelijk te laten gaan...
+//            input[i] = input[i] * Math.exp(-dt / 5);
+//        }
+//    }
+
     public void resetInputs() {
-        for (int i = 0; i < neurons ; i++) {
-            input[i] = input[i] * 0.05; // "Decay" de waarde om het geleidelijk te laten gaan...
-          //  input[i] = input[i] * Math.exp(-dt / 5);
+        double decay = Math.exp(-dt / tauSyn);
+        for (int i = 0; i < neurons; i++) {
+            I_syn[i] *= decay;
+            I_syn[i] += input[i];
+            input[i] = 0;
         }
     }
 
@@ -121,7 +138,7 @@ public class SNN {
          * @param v Membraan potentiaal
          * @return boolean
          */
-        if (v[index] >= potentialThreshold) {
+        if (v[index] >= v_threshold[index]) {
             v[index] = restMembranePotential;
 
             v_threshold[index] += threshold_adaptation;
@@ -130,11 +147,13 @@ public class SNN {
         return false;
     }
 
+
     public void updateThresholds() {
         for (int i = 0; i < neurons; i++) {
             v_threshold[i] = potentialThreshold + (v_threshold[i] - potentialThreshold) * threshold_decay;
         }
     }
+
 
     public void propagateSpike(int preSynapticNeuron) {
 
@@ -148,20 +167,61 @@ public class SNN {
         }
     }
 
-    public double[][] populateArrays(double[][] synapses) {
-        /**
-         * Maak de verbindingen tussen neuronen in de "synapses" array.
-         */
+
+
+//    public double[][] populateArrays(double[][] synapses) {
+//        /**
+//         * Maak de verbindingen tussen neuronen in de "synapses" array.
+//         */
+//        Random rng = new Random();
+//
+//        for (int presynaptic = 0; presynaptic < neurons; presynaptic++) {
+//            for (int postsynaptic = 0; postsynaptic < neurons; postsynaptic++) {
+//                if (presynaptic == postsynaptic) continue; // Maak geen verbinding met zichzelf...
+//
+//                //synapses[presynaptic][postsynaptic] = rng.nextDouble() * 25; // Vermenigvuldigd met 25 omdat het anders niet sterk genoeg is om te spiken.
+//
+//                // Als een neuron inhiberend is, gebruik een negatieve waarde:
+//                synapses[presynaptic][postsynaptic] = isInhibitory[presynaptic] ? -rng.nextDouble() * 25 : rng.nextDouble() * 25;
+//
+//                if(isInput[postsynaptic]) {
+//                    synapses[presynaptic][postsynaptic] = 0; // Geen input voor de input neuronen zelf.
+//                }
+//                if(isOutput[presynaptic]) {
+//                    synapses[presynaptic][postsynaptic] = 0; // Geen output voor de output neuronen zelf.
+//                }
+//
+//                }
+//        }
+//        return synapses;
+//    }
+
+        public double[][] populateArrays(double[][] synapses) {
         Random rng = new Random();
 
+        int gridSize = (int) Math.sqrt(neurons);
+        double lambda = 0.15;
+
         for (int presynaptic = 0; presynaptic < neurons; presynaptic++) {
+
             for (int postsynaptic = 0; postsynaptic < neurons; postsynaptic++) {
+
                 if (presynaptic == postsynaptic) continue; // Maak geen verbinding met zichzelf...
 
-                //synapses[presynaptic][postsynaptic] = rng.nextDouble() * 25; // Vermenigvuldigd met 25 omdat het anders niet sterk genoeg is om te spiken.
+                double distance = Math.hypot(presynaptic/gridSize - postsynaptic/gridSize, presynaptic%gridSize - postsynaptic%gridSize);
 
-                // Als een neuron inhiberend is, gebruik een negatieve waarde:
-                synapses[presynaptic][postsynaptic] = isInhibitory[presynaptic] ? -rng.nextDouble() * 25 : rng.nextDouble() * 25;
+                double connectionProbability = Math.exp(-lambda * distance);
+
+                if (rng.nextDouble() < connectionProbability) {
+                    // Als een neuron inhiberend is, gebruik een negatieve waarde:
+                    synapses[presynaptic][postsynaptic] = isInhibitory[presynaptic] ?
+                       //     -rng.nextDouble() * 0.2: rng.nextDouble() * 3;
+                            -rng.nextDouble() * 1: rng.nextDouble() * 1;
+                    synapses[presynaptic][postsynaptic] *= connectionProbability;
+                } else {
+
+                    synapses[presynaptic][postsynaptic] = 0;
+                }
 
                 if(isInput[postsynaptic]) {
                     synapses[presynaptic][postsynaptic] = 0; // Geen input voor de input neuronen zelf.
@@ -169,8 +229,7 @@ public class SNN {
                 if(isOutput[presynaptic]) {
                     synapses[presynaptic][postsynaptic] = 0; // Geen output voor de output neuronen zelf.
                 }
-
-                }
+            }
         }
         return synapses;
     }
@@ -183,9 +242,10 @@ public class SNN {
 
     public void injectCurrent(double[] current) {
         for (int i = 0 ; i < inputNeurons; i++) {
-            input[i] = current[i];
+            I_syn[i] += current[i];
         }
     }
+
 
     public void step(int i){
         resetInputs();
@@ -198,10 +258,8 @@ public class SNN {
         spikes[i][j] = fire;
         recordVoltage(i, j);
             if (j == 150 && i > 50) { // Debug statement, laat neuron 150 zien:
-              //  System.out.println(i,j,fire,v[j],v_threshold[j],input[j]);
+                System.out.println(i + " " + j + " " + fire + " " + v[j] + " " + v_threshold[j] + " " + input[j]);
             }
-
-
         if (fire) {
             propagateSpike(j);
         }
