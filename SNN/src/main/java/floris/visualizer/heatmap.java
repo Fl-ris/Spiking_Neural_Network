@@ -24,6 +24,7 @@ public class heatmap {
             .title("Heatmap")
             .build();
 
+
     chart.addSeries("heat", xKeys, yKeys, zValues);
 
     new SwingWrapper<>(chart).displayChart();
