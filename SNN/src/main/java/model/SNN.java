@@ -2,13 +2,17 @@ package model;
 
 import floris.io.ImportedSynapseMatrix;
 import floris.io.NetworkParameters;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 public class SNN {
+    private static final Logger LOGGER = LogManager.getLogger();
+
+
     // LIF neuron parameters:
     private byte potentialThreshold = -50;
     private byte restMembranePotential = -65; //65
@@ -30,8 +34,9 @@ public class SNN {
     public boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
     public double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
     public double[] v_threshold; // Array voor homeostatic plasiticty
-    private double threshold_adaptation = 5;
-    private double threshold_decay = 0.95;
+
+    private double threshold_adaptation = 0.5;
+    private double threshold_decay = 0.98;
 
 
     public boolean[] isInput; // Index die aangeeft of een neuron input is.
@@ -44,17 +49,15 @@ public class SNN {
 
     public double[][] externalCurrent;
 
-    // Test:
+    //
     private double[] I_syn;
     private double tauSyn = 5.0;
     private double[] refracUntil;
     private double tRef = 2.0;
 
-    public SNN() {
-        this(new NetworkParameters(0.1F, 200, 210*210, 20, 4, (int)((210*210) * 0.25)));
-    }
 
     public SNN(ImportedSynapseMatrix params) {
+        LOGGER.debug("SNN constructor...");
 
         this.dt = params.dt();
         this.simulationTime = params.simulationTime();
@@ -95,10 +98,23 @@ public class SNN {
 //            isInhibitory[i] = true;
 //
 //        }
+
         I_syn = new double[neurons];
         refracUntil = new double[neurons];
+        inhibitoryNeuronArrayInit();
 
+//        // Membraan potentiaal 0 voor alle neuronen.
+        for (int i = 0; i < neurons; i++) {
+            v[i] = initialMembranePotential;
+            input[i] = 0;
+        }
+
+    }
+
+
+    private void inhibitoryNeuronArrayInit() {
         // Test: 20% inhiberende neuronen random toevoegen:
+        LOGGER.info("Initializing Neuron array...");
         int hiddenStart = inputNeurons;
         int hiddenEnd = neurons - outputNeurons;
         int hiddenCount = hiddenEnd - hiddenStart;
@@ -113,17 +129,14 @@ public class SNN {
                 isInhibitory[index] = true;
             }
         }
-
-//        // Membraan potentiaal 0 voor alle neuronen.
-        for (int i = 0; i < neurons; i++) {
-            v[i] = initialMembranePotential;
-            input[i] = -65;
-        }
-
+        LOGGER.info("Initializing Neuron array finished");
     }
 
-
-    public void LIFneuron(int index) {
+    /**
+     * Bereken de nieuwe v waarde volgens de Leaky Integrate and Fire (LIF) formule.
+     * @param index
+     */
+    private void LIFneuron(int index) {
         dv[index] = ((-(v[index] - restMembranePotential) + membraneResistance * I_syn[index])
                 / membraneLeak) * dt;
 
@@ -138,7 +151,10 @@ public class SNN {
 //        }
 //    }
 
-    public void resetInputs() {
+    /**
+     * Reset de input waarden voor alle neuronen.
+     */
+    private void resetInputs() {
         double decay = Math.exp(-dt / tauSyn);
         for (int i = 0; i < neurons; i++) {
             I_syn[i] *= decay;
@@ -148,12 +164,12 @@ public class SNN {
     }
 
 
-    public boolean SpikeDetector(int index) {
-        /**
-         * Return boolean voor elke tijdstap of de neuron gevuurd heeft.
-         * @param v Membraan potentiaal
-         * @return boolean
-         */
+    /**
+     * Return boolean voor elke tijdstap of de neuron gevuurd heeft.
+     * @param index
+     * @return boolean
+     */
+    private boolean SpikeDetector(int index) {
         if (v[index] >= v_threshold[index]) {
             v[index] = restMembranePotential;
 
@@ -164,14 +180,22 @@ public class SNN {
     }
 
 
-    public void updateThresholds() {
+    /**
+     * Zorg er voor dat neuronen niet te vaak achter elkaar spiken door een vuur threshold te verhogen.
+     *
+     */
+    private void updateThresholds() {
         for (int i = 0; i < neurons; i++) {
             v_threshold[i] = potentialThreshold + (v_threshold[i] - potentialThreshold) * threshold_decay;
         }
     }
 
 
-    public void propagateSpike(int preSynapticNeuron) {
+    /**
+     * Laat een spike door het netwerk propageren.
+     * @param preSynapticNeuron
+     */
+    private void propagateSpike(int preSynapticNeuron) {
 
         for (int postSynapticNeuron = 0; postSynapticNeuron < neurons; postSynapticNeuron++) {
 
@@ -212,11 +236,18 @@ public class SNN {
 //        return synapses;
 //    }
 
+
+    /**
+     * Vul de synapse array op basis van de Euclidische afstand tussen neuronen.
+     * Exponentiele afname van de verbindingssterkte
+     * @param synapses
+     * @return
+     */
         public double[][] populateArrays(double[][] synapses) {
         Random rng = new Random();
 
         int gridSize = (int) Math.sqrt(neurons);
-        double lambda = 0.15;
+        double lambda = 0.1;
 
         for (int presynaptic = 0; presynaptic < neurons; presynaptic++) {
 
@@ -232,7 +263,7 @@ public class SNN {
                     // Als een neuron inhiberend is, gebruik een negatieve waarde:
                     synapses[presynaptic][postsynaptic] = isInhibitory[presynaptic] ?
                        //     -rng.nextDouble() * 0.2: rng.nextDouble() * 3;
-                            -rng.nextDouble() * 1: rng.nextDouble() * 1;
+                            -rng.nextDouble() * 3.1 - 1: rng.nextDouble() * 1;
                     synapses[presynaptic][postsynaptic] *= connectionProbability;
                 } else {
 
@@ -251,16 +282,28 @@ public class SNN {
     }
 
 
+    /**
+     * Sla het neuron voltage per tijdsstap op in de vHistory array.
+     * @param timeStep
+     * @param neuronIndex
+     */
     public void recordVoltage(int timeStep, int neuronIndex) {
+        LOGGER.debug("Recording voltage for neuron " + neuronIndex);
         vHistory[timeStep][neuronIndex] = (float) v[neuronIndex];
     }
 
 
+    /**
+     * Laat een input neuron spiken.
+     * @param current
+     */
     public void injectCurrent(double[] current) {
+        LOGGER.debug("Injecting current...");
         for (int i = 0 ; i < inputNeurons; i++) {
             I_syn[i] += current[i];
         }
     }
+
 
 
 //    public void step(int i){
@@ -283,7 +326,13 @@ public class SNN {
 //
 //    }
 
-public void step(int i){
+    /**
+     * Update neuron staat voor elke neuron.
+     *
+     * @param i
+     */
+    public void step(int i){
+    LOGGER.debug("Step #" + i);
     double tNow = i * dt;
 
     resetInputs();
@@ -300,7 +349,7 @@ public void step(int i){
         }
 
         LIFneuron(j);
-        boolean fire = SpikeDetector(j);
+        boolean fire = SpikeDetector(j); // Als het voltage hoger is dan de vuur threshold, fire = true voor deze stap / neuron.
         spikes[i][j] = fire;
         recordVoltage(i, j);
 
@@ -309,10 +358,8 @@ public void step(int i){
             firedThisStep.add(j);
             }
 
+        LOGGER.debug(i + " " + j + " " + fire + " " + v[j] + " " + v_threshold[j] + " " + I_syn[j]);
 
-        if (j == 10 && i > 50) {
-            System.out.println(i + " " + j + " " + fire + " " + v[j] + " " + v_threshold[j] + " " + I_syn[j]);
-        }
     }
 
     for (int pre : firedThisStep) {
