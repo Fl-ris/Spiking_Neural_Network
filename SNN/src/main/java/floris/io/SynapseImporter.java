@@ -6,10 +6,10 @@ import java.util.Scanner;
 
 public class SynapseImporter {
 
-        public static void main(String[] args, String filePath) {
+        public static void main(String[] args) {
 
             //File myObj = new File("/home/floris/Documenten/git_repo/Spiking_Neural_Network/config/small_brain_1.conf"); // test
-            File myObj = new File(filePath);
+            File myObj = new File(args[0]);
 
             try (Scanner myReader = new Scanner(myObj)) {
                 while (myReader.hasNextLine()) {
