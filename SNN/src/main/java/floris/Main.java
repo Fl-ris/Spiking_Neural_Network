@@ -27,7 +27,7 @@ public class Main {
         // Test: Spike de input neuronen automatisch:
         for (int t = 0; t < network.externalCurrent.length; t++) {
             if (t % 10 == 0) {
-            for (int i = 0; i < network.inputNeurons; i++){
+            for (int i = 0; i < network.synapseArray.inputNeurons; i++){
                 network.externalCurrent[t][i] = 5;
 
                    }
@@ -48,7 +48,7 @@ public class Main {
 //        }
 
 
-        for (int i = 0; i < network.simSteps; i++) {
+        for (int i = 0; i < network.simulationParameters.simSteps; i++) {
             // Volgende tijdsstap...
             network.step(i);
 

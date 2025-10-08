@@ -11,7 +11,7 @@ public class NetworkHeatmap {
     private int neurons, cols, rows;
 
     public void initialize(SNN net) {
-        this.neurons = net.neurons;
+        this.neurons = net.simulationParameters.neurons;
         this.cols = (int) Math.ceil(Math.sqrt(neurons));
         this.rows = (neurons + cols - 1) / cols;
 
