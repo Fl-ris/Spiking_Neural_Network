@@ -1,6 +1,6 @@
 package floris.visualizer;
 
-import model.SNN;
+import floris.model.SNN;
 
 import javax.swing.*;
 import java.awt.*;

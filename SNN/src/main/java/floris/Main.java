@@ -1,14 +1,18 @@
 package floris;
-import floris.visualizer.*;
-import model.SNN;
+import floris.visualizer.NetworkHeatmap;
+import floris.model.SNN;
 
 import floris.io.ImportedSynapseMatrix;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Main {
 
     public void runNetwork(ImportedSynapseMatrix params){
-        System.out.println("Starting the simulation...");
-        System.out.println(params.neurons() + " neurons used.");
+    Logger LOGGER = LogManager.getLogger();
+
+        LOGGER.info("Starting the simulation...");
+        LOGGER.info(params.neurons() + " neurons used.");
         // Maak nieuwe instantie van SNN()
 
         SNN network = new SNN(params);
