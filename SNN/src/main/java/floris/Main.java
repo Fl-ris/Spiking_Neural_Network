@@ -17,50 +17,53 @@ public class Main {
 
         SNN network = new SNN(params);
         // Vul synapse array:
-        network.populateArrays(network.synapses);
+        network.populateArrays(network.lifNeuronArray.synapses);
 
         // Visualisatie:
         NetworkHeatmap heatmap1 = new NetworkHeatmap();
         heatmap1.initialize(network);
 
 
-        // Test: Spike de input neuronen automatisch:
-        for (int t = 0; t < network.externalCurrent.length; t++) {
-            if (t % 10 == 0) {
-            for (int i = 0; i < network.synapseArray.inputNeurons; i++){
-                network.externalCurrent[t][i] = 5;
-
-                   }
-            }
-        }
-
-//        for (int t = 0; t < network.externalCurrent.length; t++) {
-//            if (t %10 == 0) {
-//            for (int i = 0; i < network.inputNeurons; i++){
-//                network.externalCurrent[t][i] = 5;
-//                if (t > 50){
-//                    break;
-//                }
-//                //   }
-//            }
-//
-//            }
-//        }
+        stimulateInputNeurons(network);
 
 
+        stepNetwork(network, heatmap1);
+
+    }
+
+    /**
+     * Ga een tijdstap verder en maar heatmap visualisatie:
+     * @param network
+     * @param heatmap1
+     */
+    private static void stepNetwork(SNN network, NetworkHeatmap heatmap1) {
         for (int i = 0; i < network.simulationParameters.simSteps; i++) {
             // Volgende tijdsstap...
             network.step(i);
 
             // Visualisatie
-            heatmap1.update(network.spikes[i]);
+            heatmap1.update(network.lifNeuronArray.spikes[i]);
             heatmap1.addDelay(30);
 
         }
+    }
 
+    /**
+     * Stimuleer de input neuronen
+     * @param network
+     */
+    private static void stimulateInputNeurons(SNN network) {
+        for (int t = 0; t < network.lifNeuronArray.externalCurrent.length; t++) {
+            if (t % 10 == 0) { // Modulo 10 om elke 10e iteratie de input neuronen te stimuleren.
+            for (int i = 0; i < network.synapseArray.inputNeurons; i++){
+                network.lifNeuronArray.externalCurrent[t][i] = 5;
+
+                   }
+            }
+        }
     }
 
 
-    }
+}
 
 

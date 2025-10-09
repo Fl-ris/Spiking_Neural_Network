@@ -13,24 +13,12 @@ public class SNN {
 
     public final SimulationParameters simulationParameters = new SimulationParameters();
     public final SynapseArray synapseArray = new SynapseArray();
+    public final LifNeuronArray lifNeuronArray = new LifNeuronArray();
     private final LifNeuronParameters lifNeuronParameters = new LifNeuronParameters();
-
-
-    public float[][] vHistory;
-
-    public double[] deltaVoltage;
-    public double[] voltage;
-
-    public boolean[][] spikes; // Boolean array van spikes (true/false) per neuron per tijdstap
-    public double[][] synapses; // Array met de sterkte van verbindingen tussen alle neuronen
-    public double[] voltageThreshold; // Array voor homeostatic plasiticty
-
-    public double[][] externalCurrent;
 
     private double threshold_adaptation = 0.5;
     private double threshold_decay = 0.98;
 
-    //
     private double[] synapseCurrent;
     private double tauSyn = 5.0;
     private double[] refracUntil;
@@ -49,22 +37,25 @@ public class SNN {
         this.simulationParameters.simSteps = this.simulationParameters.simulationTime / this.simulationParameters.dt;
 
 
-        synapses = new double[simulationParameters.neurons][simulationParameters.neurons];
-        spikes = new boolean[(int) simulationParameters.simSteps][simulationParameters.neurons];
-        voltage = new double[simulationParameters.neurons];
-        deltaVoltage = new double[simulationParameters.neurons];
+        lifNeuronArray.synapses = new double[simulationParameters.neurons][simulationParameters.neurons];
+        lifNeuronArray.spikes = new boolean[(int) simulationParameters.simSteps][simulationParameters.neurons];
+        lifNeuronArray.voltage = new double[simulationParameters.neurons];
+        lifNeuronArray.deltaVoltage = new double[simulationParameters.neurons];
         simulationParameters.input = new double[simulationParameters.neurons];
-        vHistory = new float[(int) simulationParameters.simSteps][simulationParameters.neurons];
+        lifNeuronArray.voltageHistory = new float[(int) simulationParameters.simSteps][simulationParameters.neurons];
         synapseArray.isInput = new boolean[simulationParameters.neurons];
         synapseArray.isOutput = new boolean[simulationParameters.neurons];
         synapseArray.isInhibitory = new boolean[simulationParameters.neurons];
-        externalCurrent = new double[(int) simulationParameters.simSteps][synapseArray.inputNeurons];
+        lifNeuronArray.externalCurrent = new double[(int) simulationParameters.simSteps][synapseArray.inputNeurons];
 
         initArrays();
         inhibitoryNeuronArrayInit();
 
     }
 
+    /**
+     * Initialiseer de arrays met beginwaarden.
+     */
     private void initArrays() {
         // Vul input/output/inhibitory arrays met waarden:
         for (int i = 0; i < synapseArray.inputNeurons; i++) {
@@ -75,9 +66,9 @@ public class SNN {
             synapseArray.isOutput[i] = true;
         }
 
-        voltageThreshold = new double[simulationParameters.neurons];
+        lifNeuronArray.voltageThreshold = new double[simulationParameters.neurons];
         for (int i = 0; i < simulationParameters.neurons; i++) {
-            voltageThreshold[i] = lifNeuronParameters.potentialThreshold;
+            lifNeuronArray.voltageThreshold[i] = lifNeuronParameters.potentialThreshold;
         }
 
         synapseCurrent = new double[simulationParameters.neurons];
@@ -85,12 +76,14 @@ public class SNN {
 
         // Membraan potentiaal 0 voor alle neuronen.
         for (int i = 0; i < simulationParameters.neurons; i++) {
-            voltage[i] = lifNeuronParameters.initialMembranePotential;
+            lifNeuronArray.voltage[i] = lifNeuronParameters.initialMembranePotential;
             simulationParameters.input[i] = 0;
         }
     }
 
-
+    /**
+     * Willekeuringe initialisatie van de inhiberende neuronen array.
+     */
     private void inhibitoryNeuronArrayInit() {
         // Test: 20% inhiberende neuronen random toevoegen:
         LOGGER.info("Initializing Neuron array...");
@@ -117,10 +110,10 @@ public class SNN {
      * @param index
      */
     private void LIFneuron(int index) {
-        deltaVoltage[index] = ((-(voltage[index] - lifNeuronParameters.restMembranePotential) + lifNeuronParameters.membraneResistance * synapseCurrent[index])
+        lifNeuronArray.deltaVoltage[index] = ((-(lifNeuronArray.voltage[index] - lifNeuronParameters.restMembranePotential) + lifNeuronParameters.membraneResistance * synapseCurrent[index])
                 / lifNeuronParameters.membraneLeak) * simulationParameters.dt;
 
-        voltage[index] = deltaVoltage[index] + voltage[index];
+        lifNeuronArray.voltage[index] = lifNeuronArray.deltaVoltage[index] + lifNeuronArray.voltage[index];
     }
 
 
@@ -144,10 +137,10 @@ public class SNN {
      * @return boolean
      */
     private boolean spikeDetector(int index) {
-        if (voltage[index] >= voltageThreshold[index]) {
-            voltage[index] = lifNeuronParameters.restMembranePotential;
+        if (lifNeuronArray.voltage[index] >= lifNeuronArray.voltageThreshold[index]) {
+            lifNeuronArray.voltage[index] = lifNeuronParameters.restMembranePotential;
 
-            voltageThreshold[index] += threshold_adaptation;
+            lifNeuronArray.voltageThreshold[index] += threshold_adaptation;
             return true;
         }
         return false;
@@ -160,7 +153,7 @@ public class SNN {
      */
     private void updateThresholds() {
         for (int i = 0; i < simulationParameters.neurons; i++) {
-            voltageThreshold[i] = lifNeuronParameters.potentialThreshold + (voltageThreshold[i] - lifNeuronParameters.potentialThreshold) * threshold_decay;
+            lifNeuronArray.voltageThreshold[i] = lifNeuronParameters.potentialThreshold + (lifNeuronArray.voltageThreshold[i] - lifNeuronParameters.potentialThreshold) * threshold_decay;
         }
     }
 
@@ -175,7 +168,7 @@ public class SNN {
         for (int postSynapticNeuron = 0; postSynapticNeuron < simulationParameters.neurons; postSynapticNeuron++) {
 
             if (preSynapticNeuron != postSynapticNeuron) { // Mag niet met zichzelf verbinden...
-                simulationParameters.input[postSynapticNeuron] += synapses[preSynapticNeuron][postSynapticNeuron];
+                simulationParameters.input[postSynapticNeuron] += lifNeuronArray.synapses[preSynapticNeuron][postSynapticNeuron];
 
             }
 
@@ -202,31 +195,37 @@ public class SNN {
 
                 if (presynaptic == postsynaptic) continue; // Maak geen verbinding met zichzelf...
 
+                // 1D array naar 2D neuron grid mapping, index/gridsize om de juiste rij te krijgen en index % gridsize om de juiste kolom te krijgen.
                 double distance = Math.hypot(presynaptic / gridSize - postsynaptic / gridSize, presynaptic % gridSize - postsynaptic % gridSize);
 
                 double connectionProbability = Math.exp(-lambda * distance);
 
-                if (rng.nextDouble() < connectionProbability) {
-                    // Als een neuron inhiberend is, gebruik een negatieve waarde:
-                    synapses[presynaptic][postsynaptic] = synapseArray.isInhibitory[presynaptic] ?
-                            -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 1;
-
-                    synapses[presynaptic][postsynaptic] *= connectionProbability;
-
-                } else {
-
-                    synapses[presynaptic][postsynaptic] = 0;
-                }
-
-                if (synapseArray.isInput[postsynaptic]) {
-                    synapses[presynaptic][postsynaptic] = 0; // Geen input voor de input neuronen zelf.
-                }
-                if (synapseArray.isOutput[presynaptic]) {
-                    synapses[presynaptic][postsynaptic] = 0; // Geen output voor de output neuronen zelf.
-                }
+                // Bepaal of de twee neuronen dicht genoeg bij elkaar liggen om een synapse verbinding > 0 te krijgen:
+                determineIfSynapseConnectionShouldBeMade(synapses, rng, connectionProbability, presynaptic, postsynaptic);
             }
         }
         return synapses;
+    }
+
+    private void determineIfSynapseConnectionShouldBeMade(double[][] synapses, Random rng, double connectionProbability, int presynaptic, int postsynaptic) {
+        if (rng.nextDouble() < connectionProbability) {
+            // Als een neuron inhiberend is, gebruik een negatieve waarde:
+            synapses[presynaptic][postsynaptic] = synapseArray.isInhibitory[presynaptic] ?
+                    -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 1;
+
+            synapses[presynaptic][postsynaptic] *= connectionProbability;
+
+        } else {
+
+            synapses[presynaptic][postsynaptic] = 0;
+        }
+
+        if (synapseArray.isInput[postsynaptic]) {
+            synapses[presynaptic][postsynaptic] = 0; // Geen input voor de input neuronen zelf.
+        }
+        if (synapseArray.isOutput[presynaptic]) {
+            synapses[presynaptic][postsynaptic] = 0; // Geen output voor de output neuronen zelf.
+        }
     }
 
 
@@ -238,7 +237,7 @@ public class SNN {
      */
     public void recordVoltage(int timeStep, int neuronIndex) {
         LOGGER.debug("Recording voltage for neuron " + neuronIndex);
-        vHistory[timeStep][neuronIndex] = (float) voltage[neuronIndex];
+        lifNeuronArray.voltageHistory[timeStep][neuronIndex] = (float) lifNeuronArray.voltage[neuronIndex];
     }
 
 
@@ -265,20 +264,20 @@ public class SNN {
 
         resetInputs();
         updateThresholds();
-        injectCurrent(externalCurrent[i]);
+        injectCurrent(lifNeuronArray.externalCurrent[i]);
         List<Integer> firedThisStep = new ArrayList<>();
 
         for (int j = 0; j < simulationParameters.neurons; j++) {
             if (refracUntil[j] > tNow) {
-                voltage[j] = lifNeuronParameters.restMembranePotential;
-                spikes[i][j] = false;
+                lifNeuronArray.voltage[j] = lifNeuronParameters.restMembranePotential;
+                lifNeuronArray.spikes[i][j] = false;
                 recordVoltage(i, j);
                 continue;
             }
 
             LIFneuron(j);
             boolean fire = spikeDetector(j); // Als het voltage hoger is dan de vuur threshold: fire = true voor deze stap / neuron.
-            spikes[i][j] = fire;
+            lifNeuronArray.spikes[i][j] = fire;
             recordVoltage(i, j);
 
             if (fire) {
@@ -286,7 +285,7 @@ public class SNN {
                 firedThisStep.add(j);
             }
 
-            LOGGER.debug("{} {} {} {} {} {}", i, j, fire, voltage[j], voltageThreshold[j], synapseCurrent[j]);
+            LOGGER.debug("{} {} {} {} {} {}", i, j, fire, lifNeuronArray.voltage[j], lifNeuronArray.voltageThreshold[j], synapseCurrent[j]);
 
         }
 
