@@ -53,14 +53,29 @@ public class CommandlineProcessor {
                 logger.warn("Verbosity level set to WARN");
             }
 
-            // Als er geen configuratie bestand opgegeven is:
-            if (configFilePath != null) {
-                ImportedSynapseMatrix params = new NetworkParameters(dt, simulationTime, neurons, inputNeurons, outputNeurons, inhibitoryNeurons, configFilePath);
-                Main simulation = new Main();
-                simulation.runNetwork(params);
+            ImportedSynapseMatrix params;
+            if (configFilePath != null && !configFilePath.isBlank()) {
+                try {
+                    params = SynapseImporter.importConfig(configFilePath);
+                    logger.info("Simulation parameters loaded from config file: '{}'", configFilePath);
+                } catch (Exception e) {
+                    logger.error("Error reading config file: '{}': {}", configFilePath, e.getMessage());
+                    return;
+                }
             } else {
-            // config file logic hier...
+                params = new NetworkParameters(dt,
+                        simulationTime,
+                        neurons,
+                        inputNeurons,
+                        outputNeurons,
+                        inhibitoryNeurons,
+                        "");
+                logger.info("No config file given, using commandline parameters...");
             }
+
+            Main simulation = new Main();
+            simulation.runNetwork(params);
+
 
 
         }
