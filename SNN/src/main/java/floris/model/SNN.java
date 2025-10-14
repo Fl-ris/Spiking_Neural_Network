@@ -24,6 +24,13 @@ public class SNN {
     private double[] refracUntil;
     private double tRef = 2.0;
 
+    private final double A_plus = 0.5;  // Potentiation
+    private final double A_minus = 0.55;    // Depression
+    private final double tau_plus = 20.0;   // LTP tijdsconstante
+    private final double tau_minus = 20.0;  // LTD tijdsconstante
+    private final double w_max = 5.0;   // Maximale synaptische sterkte.
+    private double[] lastSpikeTime;
+
 
     public SNN(ImportedSynapseMatrix params) {
         LOGGER.debug("SNN constructor...");
@@ -71,6 +78,9 @@ public class SNN {
             lifNeuronArray.voltageThreshold[i] = lifNeuronParameters.potentialThreshold;
         }
 
+        lastSpikeTime = new double[simulationParameters.neurons];
+
+
         synapseCurrent = new double[simulationParameters.neurons];
         refracUntil = new double[simulationParameters.neurons];
 
@@ -78,6 +88,7 @@ public class SNN {
         for (int i = 0; i < simulationParameters.neurons; i++) {
             lifNeuronArray.voltage[i] = lifNeuronParameters.initialMembranePotential;
             simulationParameters.input[i] = 0;
+            lastSpikeTime[i] = -1e9;
         }
     }
 
@@ -283,6 +294,10 @@ public class SNN {
             if (fire) {
                 refracUntil[j] = tNow + tRef;
                 firedThisStep.add(j);
+
+                // STDP:
+                lastSpikeTime[j] = tNow;
+                applySTDP(j, tNow);
             }
 
             LOGGER.debug("{} {} {} {} {} {}", i, j, fire, lifNeuronArray.voltage[j], lifNeuronArray.voltageThreshold[j], synapseCurrent[j]);
@@ -293,5 +308,36 @@ public class SNN {
             propagateSpike(pre);
         }
     }
+
+    private void applySTDP(int neuronIndex, double spikeTime) {
+        // LTP:
+        for (int preSynapticNeuron = 0; preSynapticNeuron < simulationParameters.neurons; preSynapticNeuron++) {
+            if (!synapseArray.isInhibitory[preSynapticNeuron] && lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] > 0) {
+                double timeDiff = spikeTime - lastSpikeTime[preSynapticNeuron];
+                if (timeDiff > 0) {
+                    double delta_w = A_plus * Math.exp(-timeDiff / tau_plus);
+                    lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] += delta_w;
+                    if (lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] > w_max) {
+                        lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] = w_max;
+                    }
+                }
+            }
+        }
+
+        // LTD:
+        for (int postSynapticNeuron = 0; postSynapticNeuron < simulationParameters.neurons; postSynapticNeuron++) {
+            if (!synapseArray.isInhibitory[neuronIndex] && lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] > 0) {
+                double timeDiff = spikeTime - lastSpikeTime[postSynapticNeuron];
+                if (timeDiff < 0) {
+                    double delta_w = -A_minus * Math.exp(timeDiff / tau_minus);
+                    lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] += delta_w;
+                    if (lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] < 0) {
+                        lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] = 0;
+                    }
+                }
+            }
+        }
+    }
+
 }
 
