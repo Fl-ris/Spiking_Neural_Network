@@ -28,7 +28,7 @@ public class Main {
 
 
         stepNetwork(network, heatmap1);
-
+        analyzeOutputNeurons(network);
     }
 
     /**
@@ -43,7 +43,7 @@ public class Main {
 
             // Visualisatie
             heatmap1.update(network.lifNeuronArray.spikes[i]);
-            heatmap1.addDelay(30);
+            heatmap1.addDelay(3);
 
         }
     }
@@ -63,7 +63,52 @@ public class Main {
         }
     }
 
+    private void analyzeOutputNeurons(SNN network) {
+        Logger LOGGER = LogManager.getLogger();
+        LOGGER.info("--- Analyzing Output Neuron Activity ---");
 
+        int totalOutputNeurons = network.synapseArray.outputNeurons;
+        if (totalOutputNeurons == 0) {
+            LOGGER.warn("No output neurons to analyze.");
+            return;
+        }
+
+        int[] spikeCounts = new int[network.simulationParameters.neurons];
+        int maxSpikes = -1;
+        int winningNeuron = -1;
+
+        // Iterate through each neuron to find the output neurons
+        for (int neuronIndex = 0; neuronIndex < network.simulationParameters.neurons; neuronIndex++) {
+            // Check if the current neuron is an output neuron
+            if (network.synapseArray.isOutput[neuronIndex]) {
+                int currentSpikeCount = 0;
+                // Iterate through all time steps of the simulation
+                for (int timeStep = 0; timeStep < network.simulationParameters.simSteps; timeStep++) {
+                    if (network.lifNeuronArray.spikes[timeStep][neuronIndex]) {
+                        currentSpikeCount++;
+                    }
+                }
+                spikeCounts[neuronIndex] = currentSpikeCount;
+                LOGGER.info("Output Neuron #" + neuronIndex + " fired " + currentSpikeCount + " times.");
+
+                // Check if this neuron is the new "winner"
+                if (currentSpikeCount > maxSpikes) {
+                    maxSpikes = currentSpikeCount;
+                    winningNeuron = neuronIndex;
+                }
+            }
+        }
+
+        if (winningNeuron != -1) {
+            LOGGER.info("--- Result ---");
+            LOGGER.info("Winning Neuron: #" + winningNeuron + " with " + maxSpikes + " spikes.");
+        } else {
+            LOGGER.info("--- Result ---");
+            LOGGER.info("No output neurons spiked during the simulation.");
+        }
+
+
+}
 }
 
 

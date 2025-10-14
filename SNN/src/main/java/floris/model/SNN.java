@@ -32,6 +32,11 @@ public class SNN {
     private double[] lastSpikeTime;
 
 
+    private final double lateralInhibitionRadius = 2.0;
+    private final double lateralInhibitionStrength = 2.5;
+
+
+
     public SNN(ImportedSynapseMatrix params) {
         LOGGER.debug("SNN constructor...");
 
@@ -212,14 +217,19 @@ public class SNN {
                 double connectionProbability = Math.exp(-lambda * distance);
 
                 // Bepaal of de twee neuronen dicht genoeg bij elkaar liggen om een synapse verbinding > 0 te krijgen:
-                determineIfSynapseConnectionShouldBeMade(synapses, rng, connectionProbability, presynaptic, postsynaptic);
+                determineIfSynapseConnectionShouldBeMade(synapses, rng, connectionProbability, presynaptic, postsynaptic, distance);
             }
         }
         return synapses;
     }
 
-    private void determineIfSynapseConnectionShouldBeMade(double[][] synapses, Random rng, double connectionProbability, int presynaptic, int postsynaptic) {
-        if (rng.nextDouble() < connectionProbability) {
+    private void determineIfSynapseConnectionShouldBeMade(double[][] synapses, Random rng, double connectionProbability, int presynaptic, int postsynaptic, double distance) {
+        // If neurons are close, create a fixed inhibitory synapse for lateral inhibition.
+        if (distance <= lateralInhibitionRadius) {
+            synapses[presynaptic][postsynaptic] = -lateralInhibitionStrength;
+        }
+        // Otherwise, use the original probabilistic connection logic for more distant neurons.
+        else if (rng.nextDouble() < connectionProbability) {
             // Als een neuron inhiberend is, gebruik een negatieve waarde:
             synapses[presynaptic][postsynaptic] = synapseArray.isInhibitory[presynaptic] ?
                     -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 1;

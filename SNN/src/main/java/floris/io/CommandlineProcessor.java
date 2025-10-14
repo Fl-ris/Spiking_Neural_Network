@@ -18,13 +18,13 @@ public class CommandlineProcessor {
         int neurons = 5000;
 
         @CommandLine.Option(names = {"-t", "--simulation-time"}, description = "The amount of time in ms the SNN should run.")
-        int simulationTime = 10000;
+        int simulationTime = 100;
 
         @CommandLine.Option(names = {"-dt", "--time-step"}, description = "The size of dt for the LIF equation.")
         float dt = 0.1F;
 
         @CommandLine.Option(names = {"--input-neurons"}, description = "Amount of input neurons.")
-        int inputNeurons = 50;
+        int inputNeurons = 10;
 
         @CommandLine.Option(names = {"--output-neurons"}, description = "Amount of output neurons.")
         int outputNeurons = 5;
