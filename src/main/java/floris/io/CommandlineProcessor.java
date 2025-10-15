@@ -35,6 +35,13 @@ public class CommandlineProcessor {
         @CommandLine.Option(names = {"--config-file"}, description = "Path to a SNN configuration file.")
         String configFilePath = "";
 
+        @CommandLine.Option(names = {"--enable-STDP"}, description = "Use STDP for the model to learn.")
+        boolean enableSTDP = false;
+
+        @CommandLine.Option(names = {"--enable-lateral-inhibition"}, description = "Use lateral inhibition to silence nearby neurons.")
+        boolean enableLateralInhibition = false;
+
+
         @CommandLine.Option(names = {"-v"}, description = "Verbosity level")
         private boolean[] verbose = new boolean[0];
 
@@ -69,6 +76,8 @@ public class CommandlineProcessor {
                         inputNeurons,
                         outputNeurons,
                         inhibitoryNeurons,
+                        enableSTDP,
+                        enableLateralInhibition,
                         "");
                 logger.info("No config file given, using commandline parameters...");
             }

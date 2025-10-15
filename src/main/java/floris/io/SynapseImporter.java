@@ -80,6 +80,9 @@ public class SynapseImporter {
             int inputNeurons = Integer.parseInt(getRequiredProperty.apply("input_neurons"));
             int outputNeurons = Integer.parseInt(getRequiredProperty.apply("output_neurons"));
             int inhibitoryNeurons = Integer.parseInt(getRequiredProperty.apply("inhibitory_neurons"));
+            boolean enableSTDP = Boolean.parseBoolean(getRequiredProperty.apply("enable_STDP"));
+            boolean enableLateralInhibition = Boolean.parseBoolean(getRequiredProperty.apply("enable_Lateral_Inhibition"));
+
 
             return new NetworkParameters(dt,
                     simulationTime,
@@ -87,6 +90,8 @@ public class SynapseImporter {
                     inputNeurons,
                     outputNeurons,
                     inhibitoryNeurons,
+                    enableSTDP,
+                    enableLateralInhibition,
                     configFilePath);
 
         } catch (NumberFormatException e) {

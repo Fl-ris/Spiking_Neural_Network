@@ -8,5 +8,7 @@ public interface ImportedSynapseMatrix {
     int inputNeurons();
     int outputNeurons();
     int inhibitoryNeurons();
+    boolean enableSTDP();
+    boolean enableLateralInhibition();
     String configFilePath();
 }

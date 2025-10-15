@@ -16,6 +16,9 @@ public class SNN {
     public final LifNeuronArray lifNeuronArray = new LifNeuronArray();
     private final LifNeuronParameters lifNeuronParameters = new LifNeuronParameters();
 
+    boolean enableSTDP;
+    boolean enableLateralInhibition;
+
     private double threshold_adaptation = 0.5;
     private double threshold_decay = 0.98;
 
@@ -28,7 +31,7 @@ public class SNN {
     private final double A_minus = 0.55;    // Depression
     private final double tau_plus = 20.0;   // LTP tijdsconstante
     private final double tau_minus = 20.0;  // LTD tijdsconstante
-    private final double w_max = 5.0;   // Maximale synaptische sterkte.
+    private final double maxWeightStdp = 5.0;   // Maximale synaptische sterkte.
     private double[] lastSpikeTime;
 
 
@@ -40,6 +43,18 @@ public class SNN {
     public SNN(ImportedSynapseMatrix params) {
         LOGGER.debug("SNN constructor...");
 
+        setParameters(params);
+        initArrays();
+        inhibitoryNeuronArrayInit();
+
+    }
+
+
+    /**
+     * Set the simulation parameters to be used.
+     * @param params
+     */
+    private void setParameters(ImportedSynapseMatrix params) {
         this.simulationParameters.dt = params.dt();
         this.simulationParameters.simulationTime = params.simulationTime();
         this.simulationParameters.neurons = params.neurons();
@@ -48,6 +63,20 @@ public class SNN {
         this.synapseArray.inhibitoryNeurons = params.inhibitoryNeurons();
         this.simulationParameters.simSteps = this.simulationParameters.simulationTime / this.simulationParameters.dt;
 
+        this.enableSTDP = params.enableSTDP();
+
+        if(enableSTDP == true) {
+            LOGGER.info("STDP enabled...");
+        } else {
+            LOGGER.info("STDP disabled...");
+        }
+
+        this.enableLateralInhibition = params.enableLateralInhibition();
+        if(enableSTDP == true) {
+            LOGGER.info("Lateral inhibition enabled...");
+        } else {
+            LOGGER.info("Lateral inhibition disabled...");
+        }
 
         lifNeuronArray.synapses = new double[simulationParameters.neurons][simulationParameters.neurons];
         lifNeuronArray.spikes = new boolean[(int) simulationParameters.simSteps][simulationParameters.neurons];
@@ -59,10 +88,6 @@ public class SNN {
         synapseArray.isOutput = new boolean[simulationParameters.neurons];
         synapseArray.isInhibitory = new boolean[simulationParameters.neurons];
         lifNeuronArray.externalCurrent = new double[(int) simulationParameters.simSteps][synapseArray.inputNeurons];
-
-        initArrays();
-        inhibitoryNeuronArrayInit();
-
     }
 
     /**
@@ -306,8 +331,11 @@ public class SNN {
                 firedThisStep.add(j);
 
                 // STDP:
-                lastSpikeTime[j] = tNow;
-                applySTDP(j, tNow);
+                if(enableSTDP == true) {
+                    lastSpikeTime[j] = tNow;
+                    applySTDP(j, tNow);
+                }
+
             }
 
             LOGGER.debug("{} {} {} {} {} {}", i, j, fire, lifNeuronArray.voltage[j], lifNeuronArray.voltageThreshold[j], synapseCurrent[j]);
@@ -327,8 +355,8 @@ public class SNN {
                 if (timeDiff > 0) {
                     double delta_w = A_plus * Math.exp(-timeDiff / tau_plus);
                     lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] += delta_w;
-                    if (lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] > w_max) {
-                        lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] = w_max;
+                    if (lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] > maxWeightStdp) {
+                        lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] = maxWeightStdp;
                     }
                 }
             }

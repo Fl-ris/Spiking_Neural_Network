@@ -13,19 +13,15 @@ public class Main {
 
         LOGGER.info("Starting the simulation...");
         LOGGER.info(params.neurons() + " neurons used.");
-        // Maak nieuwe instantie van SNN()
 
         SNN network = new SNN(params);
-        // Vul synapse array:
         network.populateArrays(network.lifNeuronArray.synapses);
 
-        // Visualisatie:
         NetworkHeatmap heatmap1 = new NetworkHeatmap();
         heatmap1.initialize(network);
 
 
         stimulateInputNeurons(network);
-
 
         stepNetwork(network, heatmap1);
     }
@@ -42,7 +38,7 @@ public class Main {
 
             // Visualisatie
             heatmap1.update(network.lifNeuronArray.spikes[i]);
-            heatmap1.addDelay(3);
+            heatmap1.addDelay(30);
 
         }
     }
