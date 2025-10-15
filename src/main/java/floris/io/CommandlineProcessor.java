@@ -11,7 +11,7 @@ public class CommandlineProcessor {
     private static final Logger logger = LogManager.getLogger(CommandlineProcessor.class.getName());
 
 
-    @CommandLine.Command(name = "SNN", version = "SNN-0.1", mixinStandardHelpOptions = true)
+    @CommandLine.Command(name = "SNN", version = "SNN-0.4", mixinStandardHelpOptions = true)
     public static class commandlineProcessor implements Runnable {
 
         @CommandLine.Option(names = {"-n", "--neuron-count"}, description = "The number of neurons in the network.")
@@ -85,11 +85,10 @@ public class CommandlineProcessor {
             Main simulation = new Main();
             simulation.runNetwork(params);
 
-
-
         }
 
     }
+
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new commandlineProcessor()).execute(args);

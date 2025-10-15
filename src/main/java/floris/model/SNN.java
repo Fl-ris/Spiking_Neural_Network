@@ -15,6 +15,7 @@ public class SNN {
     public final SynapseArray synapseArray = new SynapseArray();
     public final LifNeuronArray lifNeuronArray = new LifNeuronArray();
     private final LifNeuronParameters lifNeuronParameters = new LifNeuronParameters();
+    private final StdpParameters stdpParameters = new StdpParameters();
 
     boolean enableSTDP;
     boolean enableLateralInhibition;
@@ -26,13 +27,6 @@ public class SNN {
     private double tauSyn = 5.0;
     private double[] refracUntil;
     private double tRef = 2.0;
-
-    private final double A_plus = 0.5;  // Potentiation
-    private final double A_minus = 0.55;    // Depression
-    private final double tau_plus = 20.0;   // LTP tijdsconstante
-    private final double tau_minus = 20.0;  // LTD tijdsconstante
-    private final double maxWeightStdp = 5.0;   // Maximale synaptische sterkte.
-    private double[] lastSpikeTime;
 
 
     private final double lateralInhibitionRadius = 2.0;
@@ -108,7 +102,7 @@ public class SNN {
             lifNeuronArray.voltageThreshold[i] = lifNeuronParameters.potentialThreshold;
         }
 
-        lastSpikeTime = new double[simulationParameters.neurons];
+        stdpParameters.lastSpikeTime = new double[simulationParameters.neurons];
 
 
         synapseCurrent = new double[simulationParameters.neurons];
@@ -118,7 +112,7 @@ public class SNN {
         for (int i = 0; i < simulationParameters.neurons; i++) {
             lifNeuronArray.voltage[i] = lifNeuronParameters.initialMembranePotential;
             simulationParameters.input[i] = 0;
-            lastSpikeTime[i] = -1e9;
+            stdpParameters.lastSpikeTime[i] = -1e9;
         }
     }
 
@@ -332,7 +326,7 @@ public class SNN {
 
                 // STDP:
                 if(enableSTDP == true) {
-                    lastSpikeTime[j] = tNow;
+                    stdpParameters.lastSpikeTime[j] = tNow;
                     applySTDP(j, tNow);
                 }
 
@@ -351,12 +345,12 @@ public class SNN {
         // LTP:
         for (int preSynapticNeuron = 0; preSynapticNeuron < simulationParameters.neurons; preSynapticNeuron++) {
             if (!synapseArray.isInhibitory[preSynapticNeuron] && lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] > 0) {
-                double timeDiff = spikeTime - lastSpikeTime[preSynapticNeuron];
+                double timeDiff = spikeTime - stdpParameters.lastSpikeTime[preSynapticNeuron];
                 if (timeDiff > 0) {
-                    double delta_w = A_plus * Math.exp(-timeDiff / tau_plus);
+                    double delta_w = stdpParameters.A_plus * Math.exp(-timeDiff / stdpParameters.tau_plus);
                     lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] += delta_w;
-                    if (lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] > maxWeightStdp) {
-                        lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] = maxWeightStdp;
+                    if (lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] > stdpParameters.maxWeightStdp) {
+                        lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] = stdpParameters.maxWeightStdp;
                     }
                 }
             }
@@ -365,9 +359,9 @@ public class SNN {
         // LTD:
         for (int postSynapticNeuron = 0; postSynapticNeuron < simulationParameters.neurons; postSynapticNeuron++) {
             if (!synapseArray.isInhibitory[neuronIndex] && lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] > 0) {
-                double timeDiff = spikeTime - lastSpikeTime[postSynapticNeuron];
+                double timeDiff = spikeTime - stdpParameters.lastSpikeTime[postSynapticNeuron];
                 if (timeDiff < 0) {
-                    double delta_w = -A_minus * Math.exp(timeDiff / tau_minus);
+                    double delta_w = -stdpParameters.A_minus * Math.exp(timeDiff / stdpParameters.tau_minus);
                     lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] += delta_w;
                     if (lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] < 0) {
                         lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] = 0;
