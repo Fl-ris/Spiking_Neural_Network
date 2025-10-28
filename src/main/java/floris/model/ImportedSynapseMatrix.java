@@ -1,4 +1,4 @@
-package floris.io;
+package floris.model;
 
 
 public interface ImportedSynapseMatrix {

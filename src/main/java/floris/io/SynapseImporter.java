@@ -1,5 +1,7 @@
 package floris.io;
 
+import floris.model.NetworkParameters;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -12,7 +14,6 @@ public class SynapseImporter {
 
         public static void main(String[] args) {
 
-            //File myObj = new File("/home/floris/Documenten/git_repo/Spiking_Neural_Network/config/small_brain_1.conf"); // test
             File myObj = new File(args[0]);
 
             try (Scanner myReader = new Scanner(myObj)) {
@@ -32,7 +33,7 @@ public class SynapseImporter {
         }
 
     /**
-     *  Controlleer de grootte van de geimporteerde synapese matrix.
+     *  Controleer de grootte van de geimporteerde synapese matrix.
      */
     public static void verifyMatrix(){
              // test...

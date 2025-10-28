@@ -1,5 +1,7 @@
 package floris.io;
 
+import floris.model.ImportedSynapseMatrix;
+import floris.model.NetworkParameters;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,7 +13,7 @@ public class CommandlineProcessor {
     private static final Logger logger = LogManager.getLogger(CommandlineProcessor.class.getName());
 
 
-    @CommandLine.Command(name = "SNN", version = "SNN-0.4", mixinStandardHelpOptions = true)
+    @CommandLine.Command(name = "SNN", version = "SNN-0.5", mixinStandardHelpOptions = true)
     public static class commandlineProcessor implements Runnable {
 
         @CommandLine.Option(names = {"-n", "--neuron-count"}, description = "The number of neurons in the network.")

@@ -1,6 +1,5 @@
 package floris.model;
 
-import floris.io.ImportedSynapseMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,7 +34,7 @@ public class SNN {
 
 
     public SNN(ImportedSynapseMatrix params) {
-        LOGGER.debug("SNN constructor...");
+        LOGGER.debug("SNN constructor");
 
         setParameters(params);
         initArrays();
@@ -45,7 +44,7 @@ public class SNN {
 
 
     /**
-     * Set the simulation parameters to be used.
+     * Simulation parameters die gebruikt worden.
      * @param params
      */
     private void setParameters(ImportedSynapseMatrix params) {
@@ -103,8 +102,6 @@ public class SNN {
         }
 
         stdpParameters.lastSpikeTime = new double[simulationParameters.neurons];
-
-
         synapseCurrent = new double[simulationParameters.neurons];
         refracUntil = new double[simulationParameters.neurons];
 
@@ -120,7 +117,7 @@ public class SNN {
      * Willekeuringe initialisatie van de inhiberende neuronen array.
      */
     private void inhibitoryNeuronArrayInit() {
-        // Test: 20% inhiberende neuronen random toevoegen:
+        // Inhiberende neuronen random toevoegen afhankelijk van gegeven percentage:
         LOGGER.info("Initializing Neuron array...");
         int hiddenStart = synapseArray.inputNeurons;
         int hiddenEnd = simulationParameters.neurons - synapseArray.outputNeurons;
@@ -242,12 +239,22 @@ public class SNN {
         return synapses;
     }
 
+    /**
+     * Helper methode om vast te stellen of een synpase verbinding tussen twee neuronen gemaakt moet worden met een waarde hoger/lager dan 0 afhandelijk
+     * van de afstand tussen de neuronen en rng.
+     * @param synapses
+     * @param rng
+     * @param connectionProbability
+     * @param presynaptic
+     * @param postsynaptic
+     * @param distance
+     */
     private void determineIfSynapseConnectionShouldBeMade(double[][] synapses, Random rng, double connectionProbability, int presynaptic, int postsynaptic, double distance) {
-        // If neurons are close, create a fixed inhibitory synapse for lateral inhibition.
+        // Pas laterale inhibitie toe wanneer de neuronen dicht bij elkaar zitten.
         if (distance <= lateralInhibitionRadius) {
             synapses[presynaptic][postsynaptic] = -lateralInhibitionStrength;
         }
-        // Otherwise, use the original probabilistic connection logic for more distant neurons.
+
         else if (rng.nextDouble() < connectionProbability) {
             // Als een neuron inhiberend is, gebruik een negatieve waarde:
             synapses[presynaptic][postsynaptic] = synapseArray.isInhibitory[presynaptic] ?
@@ -341,13 +348,21 @@ public class SNN {
         }
     }
 
+
+    /**
+     * Pas STDP toe afhandelijk van de timing tussen het vuren van de presynaptische en postsynaptische neuron.
+     * Als de presynaptische neuron eerst vuurt gevolgd door de postsynaptische neuron: long term potentiation (LTP)
+     * Als de postsnypatiche neuron eerst vuurt: long term depression (LTD)
+     * @param neuronIndex
+     * @param spikeTime
+     */
     private void applySTDP(int neuronIndex, double spikeTime) {
         // LTP:
         for (int preSynapticNeuron = 0; preSynapticNeuron < simulationParameters.neurons; preSynapticNeuron++) {
             if (!synapseArray.isInhibitory[preSynapticNeuron] && lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] > 0) {
                 double timeDiff = spikeTime - stdpParameters.lastSpikeTime[preSynapticNeuron];
                 if (timeDiff > 0) {
-                    double delta_w = stdpParameters.A_plus * Math.exp(-timeDiff / stdpParameters.tau_plus);
+                    double delta_w = stdpParameters.potentation * Math.exp(-timeDiff / stdpParameters.tauPotentation);
                     lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] += delta_w;
                     if (lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] > stdpParameters.maxWeightStdp) {
                         lifNeuronArray.synapses[preSynapticNeuron][neuronIndex] = stdpParameters.maxWeightStdp;
@@ -361,7 +376,7 @@ public class SNN {
             if (!synapseArray.isInhibitory[neuronIndex] && lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] > 0) {
                 double timeDiff = spikeTime - stdpParameters.lastSpikeTime[postSynapticNeuron];
                 if (timeDiff < 0) {
-                    double delta_w = -stdpParameters.A_minus * Math.exp(timeDiff / stdpParameters.tau_minus);
+                    double delta_w = -stdpParameters.depression * Math.exp(timeDiff / stdpParameters.tauDepression);
                     lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] += delta_w;
                     if (lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] < 0) {
                         lifNeuronArray.synapses[neuronIndex][postSynapticNeuron] = 0;

@@ -1,15 +1,17 @@
 package floris;
+
 import floris.visualizer.NetworkHeatmap;
 import floris.model.SNN;
+import floris.model.ImportedSynapseMatrix;
 
-import floris.io.ImportedSynapseMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+
 public class Main {
 
-    public void runNetwork(ImportedSynapseMatrix params){
-    Logger LOGGER = LogManager.getLogger();
+    public void runNetwork(ImportedSynapseMatrix params) {
+        Logger LOGGER = LogManager.getLogger();
 
         LOGGER.info("Starting the simulation...");
         LOGGER.info(params.neurons() + " neurons used.");
@@ -26,8 +28,10 @@ public class Main {
         stepNetwork(network, heatmap1);
     }
 
+
     /**
      * Ga een tijdstap verder en maar heatmap visualisatie:
+     *
      * @param network
      * @param heatmap1
      */
@@ -45,15 +49,16 @@ public class Main {
 
     /**
      * Stimuleer de input neuronen
+     *
      * @param network
      */
     private static void stimulateInputNeurons(SNN network) {
         for (int t = 0; t < network.lifNeuronArray.externalCurrent.length; t++) {
             if (t % 10 == 0) { // Modulo 10 om elke 10e iteratie de input neuronen te stimuleren.
-            for (int i = 0; i < network.synapseArray.inputNeurons; i++){
-                network.lifNeuronArray.externalCurrent[t][i] = 5;
+                for (int i = 0; i < network.synapseArray.inputNeurons; i++) {
+                    network.lifNeuronArray.externalCurrent[t][i] = 5;
 
-                   }
+                }
             }
         }
     }

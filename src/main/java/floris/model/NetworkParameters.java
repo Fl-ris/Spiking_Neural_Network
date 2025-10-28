@@ -1,4 +1,4 @@
-package floris.io;
+package floris.model;
 
 
 public record NetworkParameters(float dt,
