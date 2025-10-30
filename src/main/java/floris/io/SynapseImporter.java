@@ -83,7 +83,8 @@ public class SynapseImporter {
             int inhibitoryNeurons = Integer.parseInt(getRequiredProperty.apply("inhibitory_neurons"));
             boolean enableSTDP = Boolean.parseBoolean(getRequiredProperty.apply("enable_STDP"));
             boolean enableLateralInhibition = Boolean.parseBoolean(getRequiredProperty.apply("enable_Lateral_Inhibition"));
-
+            String imagePath = props.getProperty("image_path", "");
+            double maxFiringRateHz = Double.parseDouble(props.getProperty("max_firing_rate", "0.0"));
 
             return new NetworkParameters(dt,
                     simulationTime,
@@ -93,7 +94,9 @@ public class SynapseImporter {
                     inhibitoryNeurons,
                     enableSTDP,
                     enableLateralInhibition,
-                    configFilePath);
+                    configFilePath,
+                    imagePath,
+                    maxFiringRateHz);
 
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Error occurred while parsing the config file: " + configFilePath, e);

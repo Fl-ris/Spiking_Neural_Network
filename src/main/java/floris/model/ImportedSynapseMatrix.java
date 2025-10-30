@@ -11,4 +11,6 @@ public interface ImportedSynapseMatrix {
     boolean enableSTDP();
     boolean enableLateralInhibition();
     String configFilePath();
+    String imagePath();
+    double maxFiringRateHz();
 }

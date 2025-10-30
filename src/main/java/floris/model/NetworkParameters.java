@@ -9,5 +9,7 @@ public record NetworkParameters(float dt,
                                 int inhibitoryNeurons,
                                 boolean enableSTDP,
                                 boolean enableLateralInhibition,
-                                String configFilePath) implements ImportedSynapseMatrix {
+                                String configFilePath,
+                                String imagePath,
+                                double maxFiringRateHz) implements ImportedSynapseMatrix {
 }

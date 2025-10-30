@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import floris.io.PoissonSpikeTrain;
 
 public class SNN {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -31,6 +32,8 @@ public class SNN {
     private final double lateralInhibitionRadius = 2.0;
     private final double lateralInhibitionStrength = 2.5;
 
+    private PoissonSpikeTrain spikeGenerator;
+
 
 
     public SNN(ImportedSynapseMatrix params) {
@@ -40,6 +43,15 @@ public class SNN {
         initArrays();
         inhibitoryNeuronArrayInit();
 
+        if (!params.imagePath().isEmpty() && params.maxFiringRateHz() > 0.0) {
+            this.spikeGenerator = new PoissonSpikeTrain(
+                params.imagePath(),
+                params.inputNeurons(),
+                params.maxFiringRateHz()
+            );
+        } else {
+            this.spikeGenerator = null;
+        }
     }
 
 
@@ -82,6 +94,7 @@ public class SNN {
         synapseArray.isInhibitory = new boolean[simulationParameters.neurons];
         lifNeuronArray.externalCurrent = new double[(int) simulationParameters.simSteps][synapseArray.inputNeurons];
     }
+
 
     /**
      * Initialiseer de arrays met beginwaarden.
@@ -258,7 +271,9 @@ public class SNN {
         else if (rng.nextDouble() < connectionProbability) {
             // Als een neuron inhiberend is, gebruik een negatieve waarde:
             synapses[presynaptic][postsynaptic] = synapseArray.isInhibitory[presynaptic] ?
-                    -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 1;
+               //     -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 1;
+                    -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 10;
+
 
             synapses[presynaptic][postsynaptic] *= connectionProbability;
 
@@ -297,6 +312,7 @@ public class SNN {
         LOGGER.debug("Injecting current...");
         for (int i = 0; i < synapseArray.inputNeurons; i++) {
             synapseCurrent[i] += current[i];
+            LOGGER.debug("Neuron {}: injected current={}, total synapseCurrent={}", i, current[i], synapseCurrent[i]);
         }
     }
 
@@ -311,7 +327,29 @@ public class SNN {
 
         resetInputs();
         updateThresholds();
-        injectCurrent(lifNeuronArray.externalCurrent[i]);
+
+        if (spikeGenerator != null) {
+            // Krijg spikes van de afbeelding input generator.
+            boolean[] inputSpikes = spikeGenerator.generateSpikes(simulationParameters.dt);
+
+
+            double[] currentToInject = new double[synapseArray.inputNeurons];
+            for (int k = 0; k < synapseArray.inputNeurons; k++) {
+                // Stroomsterkte waarden voor spike / geen spike:
+                if (inputSpikes[k]) {
+                    currentToInject[k] = 1.0;
+                } else {
+                    currentToInject[k] = 0.0;
+                }
+            }
+
+            injectCurrent(currentToInject);
+            LOGGER.debug("Injected current (Poisson): {}", currentToInject);
+        } else {
+            // Indien er geen afbeelding gebruikt wordt:
+            injectCurrent(lifNeuronArray.externalCurrent[i]);
+            LOGGER.debug("Injected current (External): {}", lifNeuronArray.externalCurrent[i]);
+        }
         List<Integer> firedThisStep = new ArrayList<>();
 
         for (int j = 0; j < simulationParameters.neurons; j++) {
