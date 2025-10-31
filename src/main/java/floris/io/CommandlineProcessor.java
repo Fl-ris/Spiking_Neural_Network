@@ -13,7 +13,7 @@ public class CommandlineProcessor {
     private static final Logger logger = LogManager.getLogger(CommandlineProcessor.class.getName());
 
 
-    @CommandLine.Command(name = "SNN", version = "SNN-0.5", mixinStandardHelpOptions = true)
+    @CommandLine.Command(name = "SNN", version = "SNN-0.7", mixinStandardHelpOptions = true)
     public static class commandlineProcessor implements Runnable {
 
         @CommandLine.Option(names = {"-n", "--neuron-count"}, description = "The number of neurons in the network.")
@@ -42,6 +42,15 @@ public class CommandlineProcessor {
 
         @CommandLine.Option(names = {"--enable-lateral-inhibition"}, description = "Use lateral inhibition to silence nearby neurons.")
         boolean enableLateralInhibition = false;
+
+        @CommandLine.Option(names = {"--image-path"}, description = "Path to the image file for Poisson spike generation.")
+        String imagePath = "";
+
+        @CommandLine.Option(names = {"--max-firing-rate"}, description = "Maximum firing rate in Hz for Poisson spike generation.")
+        double maxFiringRateHz = 0.0;
+
+        @CommandLine.Option(names = {"--write-spike-output-csv"}, description = "Write spike output to a CSV file.")
+        boolean writeSpikeOutputCsv = false;
 
 
         @CommandLine.Option(names = {"-v"}, description = "Verbosity level")
@@ -80,7 +89,10 @@ public class CommandlineProcessor {
                         inhibitoryNeurons,
                         enableSTDP,
                         enableLateralInhibition,
-                        "");
+                        "",
+                        imagePath,
+                        maxFiringRateHz,
+                        writeSpikeOutputCsv);
                 logger.info("No config file given, using commandline parameters...");
             }
 

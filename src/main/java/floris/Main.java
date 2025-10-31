@@ -4,6 +4,8 @@ import floris.visualizer.NetworkHeatmap;
 import floris.model.SNN;
 import floris.model.ImportedSynapseMatrix;
 
+import floris.visualizer.StatusReporter;
+import floris.io.SpikeCsvWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,10 +24,19 @@ public class Main {
         NetworkHeatmap heatmap1 = new NetworkHeatmap();
         heatmap1.initialize(network);
 
-
         stimulateInputNeurons(network);
 
+        long startTime = System.currentTimeMillis();
         stepNetwork(network, heatmap1);
+        long endTime = System.currentTimeMillis();
+
+        long duration = endTime - startTime;
+
+        StatusReporter statusReporter = new StatusReporter();
+        statusReporter.report(network, duration);
+
+        SpikeCsvWriter csvWriter = new SpikeCsvWriter();
+        csvWriter.writeSpikesIfEnabled(network, params);
     }
 
 
@@ -41,7 +52,7 @@ public class Main {
             network.step(i);
 
             // Visualisatie
-            heatmap1.update(network.lifNeuronArray.spikes[i]);
+            heatmap1.update(network.lifNeuronArray.spikes[i], network.lifNeuronArray.voltage);
             heatmap1.addDelay(30);
 
         }

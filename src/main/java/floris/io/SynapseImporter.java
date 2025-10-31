@@ -85,6 +85,7 @@ public class SynapseImporter {
             boolean enableLateralInhibition = Boolean.parseBoolean(getRequiredProperty.apply("enable_Lateral_Inhibition"));
             String imagePath = props.getProperty("image_path", "");
             double maxFiringRateHz = Double.parseDouble(props.getProperty("max_firing_rate", "0.0"));
+            boolean writeSpikeOutputCsv = Boolean.parseBoolean(props.getProperty("write_spike_output_csv", "false"));
 
             return new NetworkParameters(dt,
                     simulationTime,
@@ -96,7 +97,8 @@ public class SynapseImporter {
                     enableLateralInhibition,
                     configFilePath,
                     imagePath,
-                    maxFiringRateHz);
+                    maxFiringRateHz,
+                    writeSpikeOutputCsv);
 
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Error occurred while parsing the config file: " + configFilePath, e);

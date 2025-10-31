@@ -13,4 +13,5 @@ public interface ImportedSynapseMatrix {
     String configFilePath();
     String imagePath();
     double maxFiringRateHz();
+    boolean writeSpikeOutputCsv();
 }

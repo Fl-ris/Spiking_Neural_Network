@@ -11,5 +11,6 @@ public record NetworkParameters(float dt,
                                 boolean enableLateralInhibition,
                                 String configFilePath,
                                 String imagePath,
-                                double maxFiringRateHz) implements ImportedSynapseMatrix {
+                                double maxFiringRateHz,
+                                boolean writeSpikeOutputCsv) implements ImportedSynapseMatrix {
 }
