@@ -81,7 +81,7 @@ class SNNTest {
     }
 
     @Test
-    void testPopulateArrays_dimensionsAndSelfConnections() {
+    void testPopulateArraysdimensionsAndSelfConnections() {
         double[][] initialSynapses = new double[testParams.neurons()][testParams.neurons()];
         double[][] populatedSynapses = snn.populateArrays(initialSynapses);
 
@@ -95,7 +95,7 @@ class SNNTest {
     }
 
     @Test
-    void testPopulateArrays_inhibitoryNeuronWeights() {
+    void testPopulateArraysinhibitoryNeuronWeights() {
         testParams = new TestImportedSynapseMatrix(
                 10, // neurons
                 2,  // inputNeurons
@@ -106,7 +106,7 @@ class SNNTest {
                 false, // enableSTDP
                 true,   // enableLateralInhibition
                 "test/path/config.conf", // configFilePath
-                "", // imagePath (default empty)
+                "", // imagePath
                 0.0   // maxFiringRateHz (default 0.0)
         );
         snn = new SNN(testParams);
@@ -119,7 +119,6 @@ class SNNTest {
             }
         }
 
-        if (inhibitoryNeuronIndex != -1) {
             double[][] initialSynapses = new double[testParams.neurons()][testParams.neurons()];
             double[][] populatedSynapses = snn.populateArrays(initialSynapses);
 
@@ -130,8 +129,62 @@ class SNNTest {
                     assertTrue(weight <= 0.0, "Weight from inhibitory neuron should be non-positive");
                 }
             }
-        } else {
-            System.out.println("Warning: No inhibitory neuron found for testing. Skipping inhibitory neuron weight check.");
-        }
+    }
+
+    @Test
+    void testSpikeDetectorFiresWhenAboveThreshold() {
+        int neuronIndex = 0;
+        // Voltage boven threshold:
+        snn.lifNeuronArray.voltage[neuronIndex] = -49;
+        snn.lifNeuronArray.voltageThreshold[neuronIndex] = -50;
+
+        snn.step(0);
+
+        assertTrue(snn.lifNeuronArray.spikes[0][neuronIndex], "Neuron should have fired");
+        // Is het voltage gereset?
+        assertEquals(-65.0, snn.lifNeuronArray.voltage[neuronIndex], "Voltage should reset to resting potential after firing");
+    }
+
+    @Test
+    void testSpikeDetectorDoesNotFireWhenBelowThreshold() {
+        int neuronIndex = 0;
+        // Zet het voltage onder de threshold:
+        snn.lifNeuronArray.voltage[neuronIndex] = -51;
+        snn.lifNeuronArray.voltageThreshold[neuronIndex] = -50;
+
+        snn.step(0);
+
+        assertFalse(snn.lifNeuronArray.spikes[0][neuronIndex], "Neuron should not have fired");
+    }
+
+    @Test
+    void testUpdateThresholdsDecaysTowardBase() {
+        int neuronIndex = 0;
+        double initialThreshold = -40;
+        snn.lifNeuronArray.voltageThreshold[neuronIndex] = initialThreshold;
+
+        // Rust threshold is -50, decay is 0.98
+        double expectedThreshold = -50 + (initialThreshold - -50) * 0.98;
+
+        snn.step(0);
+
+        assertEquals(expectedThreshold, snn.lifNeuronArray.voltageThreshold[neuronIndex], 0.001, "Threshold should decay towards the base value");
+    }
+
+    @Test
+    void testLIFNeuronVoltageIntegratesInput() {
+        int neuronIndex = 2; // Geen input neuron.
+        snn.lifNeuronArray.voltage[neuronIndex] = -65; // Rust potentiaal
+        snn.simulationParameters.input[neuronIndex] = 1.0;
+
+        // Verwachte voltage van LIF neuron:
+        // deltaVoltage = ((-(voltage - rest) + R * I) / leak) * dt
+        // deltaVoltage = ((-(-65 - -65) + 10 * 1.0) / 10) * 0.1 = ((0 + 10) / 10) * 0.1 = 1 * 0.1 = 0.1
+        // new voltage = old voltage + deltaVoltage = -65 + 0.1 = -64.9
+        double expectedVoltage = -64.9;
+
+        snn.step(0);
+
+        assertEquals(expectedVoltage, snn.lifNeuronArray.voltage[neuronIndex], 0.001, "Wrong voltage...");
     }
 }
