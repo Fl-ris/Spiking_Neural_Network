@@ -4,6 +4,8 @@ import org.knowm.xchart.HeatMapChart;
 import org.knowm.xchart.HeatMapChartBuilder;
 import org.knowm.xchart.SwingWrapper;
 
+
+@Deprecated
 public class heatmap {
     public static void plot(double[][] matrix) {
 

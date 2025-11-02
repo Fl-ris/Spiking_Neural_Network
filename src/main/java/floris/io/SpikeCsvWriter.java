@@ -6,7 +6,7 @@ import floris.model.ImportedSynapseMatrix;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class SpikeCsvWriter {
@@ -20,6 +20,7 @@ public class SpikeCsvWriter {
                     header.append(",Neuron_").append(i);
                 }
             }
+            // Begin met het csv bestand schrijven, eerst de header:
             writer.println(header.toString());
 
             // Schrijf spike data van output spikes voor elke tijdsstap.
@@ -39,8 +40,9 @@ public class SpikeCsvWriter {
 
     public void writeSpikesIfEnabled(SNN snn, ImportedSynapseMatrix params) {
         if (params.writeSpikeOutputCsv()) {
-            String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            String filename = "spike_output_" + date + ".csv";
+            // Om een bestaand output bestand niet te overschrijven, voeg de datum + tijd toe:
+            String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+            String filename = "output/SpikeOutputData_" + date + ".csv";
             writeSpikesToCsv(snn, filename);
         }
     }

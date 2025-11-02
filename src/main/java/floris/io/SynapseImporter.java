@@ -46,7 +46,7 @@ public class SynapseImporter {
         }
 
     /**
-     * Read the config file and save parameters with the NetworkParameters record.
+     * Parse config bestand en sla de nieuwe parameters op:
       * @param configFilePath
      * @return
      */

@@ -17,8 +17,8 @@ public class SNN {
     private final LifNeuronParameters lifNeuronParameters = new LifNeuronParameters();
     private final StdpParameters stdpParameters = new StdpParameters();
 
-    boolean enableSTDP;
-    boolean enableLateralInhibition;
+    public boolean enableSTDP;
+    public boolean enableLateralInhibition;
 
     private double threshold_adaptation = 0.5;
     private double threshold_decay = 0.98;
