@@ -107,6 +107,7 @@ public class NetworkHeatmap {
     }
 
     public void update(boolean[] spikes, double[] voltages) {
+        if (panel == null) return;
         currentSpikes = spikes;
         currentVoltages = voltages;
         SwingUtilities.invokeLater(panel::repaint);

@@ -60,6 +60,10 @@ public class CommandlineProcessor {
         @Override
         public void run() {
 
+            if (!InputValidator.validate(this)) {
+                return;
+            }
+
             if (verbose.length > 2) {
                 Configurator.setRootLevel(Level.DEBUG);
                 logger.debug("Verbosity level changed to DEBUG");
