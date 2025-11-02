@@ -1,5 +1,7 @@
-package floris.model;
+package floris.config;
 
+
+import floris.model.ImportedSynapseMatrix;
 
 public record NetworkParameters(float dt,
                                 int simulationTime,

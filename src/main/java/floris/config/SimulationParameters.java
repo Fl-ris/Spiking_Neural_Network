@@ -1,4 +1,4 @@
-package floris.model;
+package floris.config;
 
 public class SimulationParameters {
     // Simulatie parameters

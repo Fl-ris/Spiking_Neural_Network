@@ -1,6 +1,7 @@
 package floris.visualizer;
 
 import floris.model.SNN;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -58,6 +59,7 @@ public class NetworkHeatmap {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
+
     // Bepaal cel grootte:
     private void paintNeurons(Graphics g) {
         if (currentSpikes == null || currentVoltages == null) return;

@@ -1,7 +1,7 @@
 package floris.io;
 
 import floris.model.ImportedSynapseMatrix;
-import floris.model.NetworkParameters;
+import floris.config.NetworkParameters;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

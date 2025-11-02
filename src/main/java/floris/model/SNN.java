@@ -1,11 +1,15 @@
 package floris.model;
 
+import floris.config.LifNeuronParameters;
+import floris.config.SimulationParameters;
+import floris.config.StdpParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
 import floris.io.PoissonSpikeTrain;
 
 public class SNN {
@@ -35,7 +39,6 @@ public class SNN {
     private PoissonSpikeTrain spikeGenerator;
 
 
-
     public SNN(ImportedSynapseMatrix params) {
         LOGGER.debug("SNN constructor");
 
@@ -43,11 +46,20 @@ public class SNN {
         initArrays();
         inhibitoryNeuronArrayInit();
 
+        poissonSpikeTrainInput(params);
+    }
+
+    /**
+     * Verkrijg de spikes van een input afbeelding indien deze gegeven is:
+     *
+     * @param params
+     */
+    private void poissonSpikeTrainInput(ImportedSynapseMatrix params) {
         if (!params.imagePath().isEmpty() && params.maxFiringRateHz() > 0.0) {
             this.spikeGenerator = new PoissonSpikeTrain(
-                params.imagePath(),
-                params.inputNeurons(),
-                params.maxFiringRateHz()
+                    params.imagePath(),
+                    params.inputNeurons(),
+                    params.maxFiringRateHz()
             );
         } else {
             this.spikeGenerator = null;
@@ -57,6 +69,7 @@ public class SNN {
 
     /**
      * Simulation parameters die gebruikt worden.
+     *
      * @param params
      */
     private void setParameters(ImportedSynapseMatrix params) {
@@ -70,14 +83,14 @@ public class SNN {
 
         this.enableSTDP = params.enableSTDP();
 
-        if(enableSTDP == true) {
+        if (enableSTDP == true) {
             LOGGER.info("STDP enabled...");
         } else {
             LOGGER.info("STDP disabled...");
         }
 
         this.enableLateralInhibition = params.enableLateralInhibition();
-        if(enableSTDP == true) {
+        if (enableSTDP == true) {
             LOGGER.info("Lateral inhibition enabled...");
         } else {
             LOGGER.info("Lateral inhibition disabled...");
@@ -255,6 +268,7 @@ public class SNN {
     /**
      * Helper methode om vast te stellen of een synpase verbinding tussen twee neuronen gemaakt moet worden met een waarde hoger/lager dan 0 afhandelijk
      * van de afstand tussen de neuronen en rng.
+     *
      * @param synapses
      * @param rng
      * @param connectionProbability
@@ -266,12 +280,10 @@ public class SNN {
         // Pas laterale inhibitie toe wanneer de neuronen dicht bij elkaar zitten.
         if (distance <= lateralInhibitionRadius) {
             synapses[presynaptic][postsynaptic] = -lateralInhibitionStrength;
-        }
-
-        else if (rng.nextDouble() < connectionProbability) {
+        } else if (rng.nextDouble() < connectionProbability) {
             // Als een neuron inhiberend is, gebruik een negatieve waarde:
             synapses[presynaptic][postsynaptic] = synapseArray.isInhibitory[presynaptic] ?
-               //     -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 1;
+                    //     -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 1;
                     -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 10;
 
 
@@ -370,7 +382,7 @@ public class SNN {
                 firedThisStep.add(j);
 
                 // STDP:
-                if(enableSTDP == true) {
+                if (enableSTDP == true) {
                     stdpParameters.lastSpikeTime[j] = tNow;
                     applySTDP(j, tNow);
                 }
@@ -391,6 +403,7 @@ public class SNN {
      * Pas STDP toe afhandelijk van de timing tussen het vuren van de presynaptische en postsynaptische neuron.
      * Als de presynaptische neuron eerst vuurt gevolgd door de postsynaptische neuron: long term potentiation (LTP)
      * Als de postsnypatiche neuron eerst vuurt: long term depression (LTD)
+     *
      * @param neuronIndex
      * @param spikeTime
      */

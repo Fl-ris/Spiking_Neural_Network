@@ -1,6 +1,6 @@
 package floris.io;
 
-import floris.model.NetworkParameters;
+import floris.config.NetworkParameters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,7 +12,8 @@ import java.util.function.Function;
 
 public class SynapseImporter {
 
-        public static void main(String[] args) {
+    @Deprecated
+    public static void main(String[] args) {
 
             File myObj = new File(args[0]);
 
@@ -35,6 +36,7 @@ public class SynapseImporter {
     /**
      *  Controleer de grootte van de geimporteerde synapese matrix.
      */
+    @Deprecated
     public static void verifyMatrix(){
              // test...
             double[][] synapsesMatrix = new double[][]{
