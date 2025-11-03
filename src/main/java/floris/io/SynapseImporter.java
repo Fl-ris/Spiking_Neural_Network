@@ -15,41 +15,42 @@ public class SynapseImporter {
     @Deprecated
     public static void main(String[] args) {
 
-            File myObj = new File(args[0]);
+        File myObj = new File(args[0]);
 
-            try (Scanner myReader = new Scanner(myObj)) {
-                while (myReader.hasNextLine()) {
-                    String data = myReader.nextLine();
-                    System.out.println(data);
-                }
-
-            } catch (FileNotFoundException e) {
-                System.out.println("IO Error...");
+        try (Scanner myReader = new Scanner(myObj)) {
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                System.out.println(data);
             }
 
-            verifyMatrix();
-
-            //parseSynapseMatrix();
-
+        } catch (FileNotFoundException e) {
+            System.out.println("IO Error...");
         }
+
+        verifyMatrix();
+
+        //parseSynapseMatrix();
+
+    }
 
     /**
-     *  Controleer de grootte van de geimporteerde synapese matrix.
+     * Controleer de grootte van de geimporteerde synapese matrix.
      */
     @Deprecated
-    public static void verifyMatrix(){
-             // test...
-            double[][] synapsesMatrix = new double[][]{
-                    {0.0, 0.0, 0.0},
-            };
+    public static void verifyMatrix() {
+        // test...
+        double[][] synapsesMatrix = new double[][]{
+                {0.0, 0.0, 0.0},
+        };
 
-            System.out.println("Rows: " + synapsesMatrix.length);
-            System.out.println("Cols:" + synapsesMatrix[0].length);
-        }
+        System.out.println("Rows: " + synapsesMatrix.length);
+        System.out.println("Cols:" + synapsesMatrix[0].length);
+    }
 
     /**
      * Parse config bestand en sla de nieuwe parameters op:
-      * @param configFilePath
+     *
+     * @param configFilePath
      * @return
      */
     public static NetworkParameters importConfig(String configFilePath) {
