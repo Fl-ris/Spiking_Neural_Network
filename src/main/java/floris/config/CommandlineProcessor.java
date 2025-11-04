@@ -1,7 +1,8 @@
-package floris.io;
+package floris.config;
 
+import floris.io.InputValidator;
+import floris.io.SynapseImporter;
 import floris.model.ImportedSynapseMatrix;
-import floris.config.NetworkParameters;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,25 +18,25 @@ public class CommandlineProcessor {
     public static class commandlineProcessor implements Runnable {
 
         @CommandLine.Option(names = {"-n", "--neuron-count"}, description = "The number of neurons in the network.")
-        int neurons = 5000;
+        public int neurons = 5000;
 
         @CommandLine.Option(names = {"-t", "--simulation-time"}, description = "The amount of time in ms the SNN should run.")
-        int simulationTime = 100;
+        public int simulationTime = 100;
 
         @CommandLine.Option(names = {"-dt", "--time-step"}, description = "The size of dt for the LIF equation.")
-        float dt = 0.1F;
+        public float dt = 0.1F;
 
         @CommandLine.Option(names = {"--input-neurons"}, description = "Amount of input neurons.")
-        int inputNeurons = 10;
+        public int inputNeurons = 10;
 
         @CommandLine.Option(names = {"--output-neurons"}, description = "Amount of output neurons.")
-        int outputNeurons = 5;
+        public int outputNeurons = 5;
 
         @CommandLine.Option(names = {"--inhibitory-neurons"}, description = "Amount of inhibitory neurons.")
-        int inhibitoryNeurons = 1000;
+        public int inhibitoryNeurons = 1000;
 
         @CommandLine.Option(names = {"--config-file"}, description = "Path to a SNN configuration file.")
-        String configFilePath = "";
+        public String configFilePath = "";
 
         @CommandLine.Option(names = {"--enable-STDP"}, description = "Use STDP for the model to learn.")
         boolean enableSTDP = false;
@@ -44,7 +45,7 @@ public class CommandlineProcessor {
         boolean enableLateralInhibition = false;
 
         @CommandLine.Option(names = {"--image-path"}, description = "Path to the image file for Poisson spike generation.")
-        String imagePath = "";
+        public String imagePath = "";
 
         @CommandLine.Option(names = {"--max-firing-rate"}, description = "Maximum firing rate in Hz for Poisson spike generation.")
         double maxFiringRateHz = 0.0;
@@ -52,6 +53,23 @@ public class CommandlineProcessor {
         @CommandLine.Option(names = {"--write-spike-output-csv"}, description = "Write spike output to a CSV file.")
         boolean writeSpikeOutputCsv = false;
 
+        @CommandLine.Option(names = {"--inhibitory-strength"}, description = "The strength of inhibitory neurons.")
+        public double inhibitoryStrength = 1.0;
+
+        @CommandLine.Option(names = {"--excitatory-strength"}, description = "The strength of excitatory neurons.")
+        public double excitatoryStrength = 25.0;
+
+        @CommandLine.Option(names = {"--lambda"}, description = "The connection strength factor for neuron proximity connection.")
+        public double lambda = 0.1;
+
+        @CommandLine.Option(names = {"--refractory-period"}, description = "The refractory period of a neuron in ms.")
+        public double refractoryPeriod = 2.0;
+
+        @CommandLine.Option(names = {"--output-directory"}, description = "The directory to save output files to.")
+        public String outputDirectory = "output/";
+
+        @CommandLine.Option(names = {"--enable-heatmap"}, description = "Enable the heatmap visualization.", negatable = true)
+        boolean enableHeatmap = true;
 
         @CommandLine.Option(names = {"-v"}, description = "Verbosity level")
         private boolean[] verbose = new boolean[0];
@@ -96,7 +114,13 @@ public class CommandlineProcessor {
                         "",
                         imagePath,
                         maxFiringRateHz,
-                        writeSpikeOutputCsv);
+                        writeSpikeOutputCsv,
+                        inhibitoryStrength,
+                        excitatoryStrength,
+                        lambda,
+                        refractoryPeriod,
+                        outputDirectory,
+                        enableHeatmap);
                 logger.info("No config file given, using commandline parameters...");
             }
 

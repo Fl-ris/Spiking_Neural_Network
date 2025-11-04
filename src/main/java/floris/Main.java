@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 
 public class Main {
-
+    
     public void runNetwork(ImportedSynapseMatrix params) {
         Logger LOGGER = LogManager.getLogger();
 
@@ -21,13 +21,16 @@ public class Main {
         SNN network = new SNN(params);
         network.populateArrays(network.lifNeuronArray.synapses);
 
-        NetworkHeatmap heatmap1 = new NetworkHeatmap();
-        heatmap1.initialize(network);
+        NetworkHeatmap heatmap1 = null;
+        if (params.enableHeatmap()) {
+            heatmap1 = new NetworkHeatmap();
+            heatmap1.initialize(network);
+        }
 
         stimulateInputNeurons(network);
 
         long startTime = System.currentTimeMillis();
-        stepNetwork(network, heatmap1);
+        stepNetwork(network, heatmap1, params.enableHeatmap());
         long endTime = System.currentTimeMillis();
 
         long duration = endTime - startTime;
@@ -46,14 +49,16 @@ public class Main {
      * @param network
      * @param heatmap1
      */
-    private static void stepNetwork(SNN network, NetworkHeatmap heatmap1) {
+    private static void stepNetwork(SNN network, NetworkHeatmap heatmap1, boolean enableHeatmap) {
         for (int i = 0; i < network.simulationParameters.simSteps; i++) {
             // Volgende tijdsstap...
             network.step(i);
 
             // Visualisatie
-            heatmap1.update(network.lifNeuronArray.spikes[i], network.lifNeuronArray.voltage);
-            heatmap1.addDelay(30);
+            if (enableHeatmap) {
+                heatmap1.update(network.lifNeuronArray.spikes[i], network.lifNeuronArray.voltage);
+                heatmap1.addDelay(30);
+            }
 
         }
     }

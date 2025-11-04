@@ -12,41 +12,6 @@ import java.util.function.Function;
 
 public class SynapseImporter {
 
-    @Deprecated
-    public static void main(String[] args) {
-
-        File myObj = new File(args[0]);
-
-        try (Scanner myReader = new Scanner(myObj)) {
-            while (myReader.hasNextLine()) {
-                String data = myReader.nextLine();
-                System.out.println(data);
-            }
-
-        } catch (FileNotFoundException e) {
-            System.out.println("IO Error...");
-        }
-
-        verifyMatrix();
-
-        //parseSynapseMatrix();
-
-    }
-
-    /**
-     * Controleer de grootte van de geimporteerde synapese matrix.
-     */
-    @Deprecated
-    public static void verifyMatrix() {
-        // test...
-        double[][] synapsesMatrix = new double[][]{
-                {0.0, 0.0, 0.0},
-        };
-
-        System.out.println("Rows: " + synapsesMatrix.length);
-        System.out.println("Cols:" + synapsesMatrix[0].length);
-    }
-
     /**
      * Parse config bestand en sla de nieuwe parameters op:
      *
@@ -89,6 +54,12 @@ public class SynapseImporter {
             String imagePath = props.getProperty("image_path", "");
             double maxFiringRateHz = Double.parseDouble(props.getProperty("max_firing_rate", "0.0"));
             boolean writeSpikeOutputCsv = Boolean.parseBoolean(props.getProperty("write_spike_output_csv", "false"));
+            double inhibitoryStrength = Double.parseDouble(props.getProperty("inhibitory_strength", "1.0"));
+            double excitatoryStrength = Double.parseDouble(props.getProperty("excitatory_strength", "25.0"));
+            double lambda = Double.parseDouble(props.getProperty("lambda", "0.1"));
+            double refractoryPeriod = Double.parseDouble(props.getProperty("refractory_period", "2.0"));
+            String outputDirectory = props.getProperty("output_directory", "output/");
+            boolean enableHeatmap = Boolean.parseBoolean(props.getProperty("enable_heatmap", "true"));
 
             return new NetworkParameters(dt,
                     simulationTime,
@@ -98,11 +69,16 @@ public class SynapseImporter {
                     inhibitoryNeurons,
                     enableSTDP,
                     enableLateralInhibition,
-                    configFilePath,
+                    "",
                     imagePath,
                     maxFiringRateHz,
-                    writeSpikeOutputCsv);
-
+                    writeSpikeOutputCsv,
+                    inhibitoryStrength,
+                    excitatoryStrength,
+                    lambda,
+                    refractoryPeriod,
+                    outputDirectory,
+                    enableHeatmap);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Error occurred while parsing the config file: " + configFilePath, e);
         }

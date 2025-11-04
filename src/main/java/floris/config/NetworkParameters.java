@@ -14,5 +14,11 @@ public record NetworkParameters(float dt,
                                 String configFilePath,
                                 String imagePath,
                                 double maxFiringRateHz,
-                                boolean writeSpikeOutputCsv) implements ImportedSynapseMatrix {
+                                boolean writeSpikeOutputCsv,
+                                double inhibitoryStrength,
+                                double excitatoryStrength,
+                                double lambda,
+                                double refractoryPeriod,
+                                String outputDirectory,
+                                boolean enableHeatmap) implements ImportedSynapseMatrix {
 }

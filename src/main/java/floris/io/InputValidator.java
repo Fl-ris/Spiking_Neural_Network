@@ -1,5 +1,7 @@
 package floris.io;
 
+import floris.config.CommandlineProcessor;
+
 import java.io.File;
 
 public class InputValidator {
@@ -26,7 +28,7 @@ public class InputValidator {
             return false;
         }
         if (processor.inhibitoryNeurons < 0 || processor.inhibitoryNeurons >= processor.neurons) {
-            System.err.println("Error: Number of inhibitory neurons must be non-negative and less than the total number of neurons.");
+            System.err.println("Error: Number of inhibitory neurons must not be negative and less than the total number of neurons.");
             return false;
         }
         if (processor.inputNeurons + processor.outputNeurons + processor.inhibitoryNeurons >= processor.neurons) {

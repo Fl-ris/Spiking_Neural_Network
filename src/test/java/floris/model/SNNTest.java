@@ -2,6 +2,7 @@ package floris.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -18,8 +19,12 @@ class SNNTest {
         String configFilePath;
         String imagePath;
         double maxFiringRateHz;
+        double refractoryPeriod;
+        double lambda;
+        double excitatoryStrength;
+        double inhibitoryStrength;
 
-        public TestImportedSynapseMatrix(int neurons, int inputNeurons, int outputNeurons, int inhibitoryNeurons, float dt, int simulationTime, boolean enableSTDP, boolean enableLateralInhibition, String configFilePath, String imagePath, double maxFiringRateHz) {
+        public TestImportedSynapseMatrix(int neurons, int inputNeurons, int outputNeurons, int inhibitoryNeurons, float dt, int simulationTime, boolean enableSTDP, boolean enableLateralInhibition, String configFilePath, String imagePath, double maxFiringRateHz, double refractoryPeriod, double lambda, double excitatoryStrength, double inhibitoryStrength) {
             this.neurons = neurons;
             this.inputNeurons = inputNeurons;
             this.outputNeurons = outputNeurons;
@@ -31,32 +36,101 @@ class SNNTest {
             this.configFilePath = configFilePath;
             this.imagePath = imagePath;
             this.maxFiringRateHz = maxFiringRateHz;
+            this.refractoryPeriod = refractoryPeriod;
+            this.lambda = lambda;
+            this.excitatoryStrength = excitatoryStrength;
+            this.inhibitoryStrength = inhibitoryStrength;
         }
 
         @Override
-        public int neurons() { return neurons; }
+        public int neurons() {
+            return neurons;
+        }
+
         @Override
-        public int inputNeurons() { return inputNeurons; }
+        public int inputNeurons() {
+            return inputNeurons;
+        }
+
         @Override
-        public int outputNeurons() { return outputNeurons; }
+        public int outputNeurons() {
+            return outputNeurons;
+        }
+
         @Override
-        public int inhibitoryNeurons() { return inhibitoryNeurons; }
+        public int inhibitoryNeurons() {
+            return inhibitoryNeurons;
+        }
+
         @Override
-        public float dt() { return dt; }
+        public float dt() {
+            return dt;
+        }
+
         @Override
-        public int simulationTime() { return simulationTime; }
+        public int simulationTime() {
+            return simulationTime;
+        }
+
         @Override
-        public boolean enableSTDP() { return enableSTDP; }
+        public boolean enableSTDP() {
+            return enableSTDP;
+        }
+
         @Override
-        public boolean enableLateralInhibition() { return enableLateralInhibition; }
+        public boolean enableLateralInhibition() {
+            return enableLateralInhibition;
+        }
+
         @Override
-        public String configFilePath() { return configFilePath; }
+        public String configFilePath() {
+            return configFilePath;
+        }
+
         @Override
-        public String imagePath() { return imagePath; }
+        public String imagePath() {
+            return imagePath;
+        }
+
         @Override
-        public double maxFiringRateHz() { return maxFiringRateHz; }
+        public double maxFiringRateHz() {
+            return maxFiringRateHz;
+        }
+
         @Override
-        public boolean writeSpikeOutputCsv() { return false; }
+        public boolean writeSpikeOutputCsv() {
+            return false;
+        }
+
+        @Override
+        public double refractoryPeriod() {
+            return refractoryPeriod;
+        }
+
+        @Override
+        public double lambda() {
+            return lambda;
+        }
+
+        @Override
+        public double excitatoryStrength() {
+            return excitatoryStrength;
+        }
+
+        @Override
+        public double inhibitoryStrength() {
+            return inhibitoryStrength;
+        }
+
+        @Override
+        public String outputDirectory() {
+            return null;
+        }
+
+        @Override
+        public boolean enableHeatmap() {
+            return false;
+        }
     }
 
     private SNN snn;
@@ -75,13 +149,17 @@ class SNNTest {
                 true,   // enableLateralInhibition
                 "test/path/config.conf", // configFilePath
                 "", // imagePath
-                0.0   // maxFiringRateHz
+                0.0,   // maxFiringRateHz
+                5.0, // refractoryPeriod
+                0.1, // lambda
+                2.0, // excitatoryStrength
+                1.0 // inhibitoryStrength
         );
         snn = new SNN(testParams);
     }
 
     @Test
-    void testPopulateArraysdimensionsAndSelfConnections() {
+    void testPopulateArraysDimensionsAndSelfConnections() {
         double[][] initialSynapses = new double[testParams.neurons()][testParams.neurons()];
         double[][] populatedSynapses = snn.populateArrays(initialSynapses);
 
@@ -95,21 +173,9 @@ class SNNTest {
     }
 
     @Test
-    void testPopulateArraysinhibitoryNeuronWeights() {
-        testParams = new TestImportedSynapseMatrix(
-                10, // neurons
-                2,  // inputNeurons
-                2,  // outputNeurons
-                1,  // inhibitoryNeurons
-                0.1f, // dt (changed to float)
-                100, // simulationTime (changed to int)
-                false, // enableSTDP
-                true,   // enableLateralInhibition
-                "test/path/config.conf", // configFilePath
-                "", // imagePath
-                0.0   // maxFiringRateHz (default 0.0)
-        );
-        snn = new SNN(testParams);
+    void testPopulateArraysInhibitoryNeuronWeights() {
+        double[][] initialSynapses = new double[testParams.neurons()][testParams.neurons()];
+        double[][] populatedSynapses = snn.populateArrays(initialSynapses);
 
         int inhibitoryNeuronIndex = -1;
         for (int i = 0; i < testParams.neurons(); i++) {
@@ -119,16 +185,13 @@ class SNNTest {
             }
         }
 
-            double[][] initialSynapses = new double[testParams.neurons()][testParams.neurons()];
-            double[][] populatedSynapses = snn.populateArrays(initialSynapses);
-
-            // Zijn inhiberende neuronen wel negatief?
-            for (int postSynaptic = 0; postSynaptic < testParams.neurons(); postSynaptic++) {
-                if (inhibitoryNeuronIndex != postSynaptic) { // Met zichzelf verbonden neuronen.
-                    double weight = populatedSynapses[inhibitoryNeuronIndex][postSynaptic];
-                    assertTrue(weight <= 0.0, "Weight from inhibitory neuron should be non-positive");
-                }
+        // Zijn de inhiberende neuronen negatief?
+        for (int postSynaptic = 0; postSynaptic < testParams.neurons(); postSynaptic++) {
+            if (inhibitoryNeuronIndex != -1 && inhibitoryNeuronIndex != postSynaptic) { // Verbonden met zichzelf...
+                double weight = populatedSynapses[inhibitoryNeuronIndex][postSynaptic];
+                assertTrue(weight <= 0.0, "Weight from inhibitory neuron should be non-positive");
             }
+        }
     }
 
     @Test

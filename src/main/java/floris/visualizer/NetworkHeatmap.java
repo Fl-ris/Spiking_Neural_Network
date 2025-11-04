@@ -86,8 +86,10 @@ public class NetworkHeatmap {
         g.setColor(Color.BLACK);
         g.drawRect(x, y, cellWidth, cellHeight);
 
-        // Weergeef de text:
-        drawVoltageText(g, x, y, cellWidth, cellHeight, index, isSpiking);
+        // Weergeef de text als er niet te veel neuren zijn om het leesbaar te houden:
+        if (neurons < 2000) {
+            drawVoltageText(g, x, y, cellWidth, cellHeight, index, isSpiking);
+        }
     }
 
     private NeuronType getNeuronType(int index) {

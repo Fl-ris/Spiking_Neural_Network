@@ -20,6 +20,7 @@ public class SNN {
     public final LifNeuronArray lifNeuronArray = new LifNeuronArray();
     private final LifNeuronParameters lifNeuronParameters = new LifNeuronParameters();
     private final StdpParameters stdpParameters = new StdpParameters();
+    private ImportedSynapseMatrix params;
 
     public boolean enableSTDP;
     public boolean enableLateralInhibition;
@@ -29,8 +30,8 @@ public class SNN {
 
     private double[] synapseCurrent;
     private double tauSyn = 5.0;
+    private double tRef;
     private double[] refracUntil;
-    private double tRef = 2.0;
 
 
     private final double lateralInhibitionRadius = 2.0;
@@ -41,7 +42,7 @@ public class SNN {
 
     public SNN(ImportedSynapseMatrix params) {
         LOGGER.debug("SNN constructor");
-
+        this.params = params;
         setParameters(params);
         initArrays();
         inhibitoryNeuronArrayInit();
@@ -56,11 +57,7 @@ public class SNN {
      */
     private void poissonSpikeTrainInput(ImportedSynapseMatrix params) {
         if (!params.imagePath().isEmpty() && params.maxFiringRateHz() > 0.0) {
-            this.spikeGenerator = new PoissonSpikeTrain(
-                    params.imagePath(),
-                    params.inputNeurons(),
-                    params.maxFiringRateHz()
-            );
+            this.spikeGenerator = new PoissonSpikeTrain(params.imagePath(), params.inputNeurons(), params.maxFiringRateHz());
         } else {
             this.spikeGenerator = null;
         }
@@ -90,6 +87,7 @@ public class SNN {
         }
 
         this.enableLateralInhibition = params.enableLateralInhibition();
+        this.tRef = params.refractoryPeriod();
         if (enableSTDP == true) {
             LOGGER.info("Lateral inhibition enabled...");
         } else {
@@ -127,6 +125,7 @@ public class SNN {
             lifNeuronArray.voltageThreshold[i] = lifNeuronParameters.potentialThreshold;
         }
 
+        // To-do: fix:
         stdpParameters.lastSpikeTime = new double[simulationParameters.neurons];
         synapseCurrent = new double[simulationParameters.neurons];
         refracUntil = new double[simulationParameters.neurons];
@@ -168,8 +167,7 @@ public class SNN {
      * @param index
      */
     private void LIFneuron(int index) {
-        lifNeuronArray.deltaVoltage[index] = ((-(lifNeuronArray.voltage[index] - lifNeuronParameters.restMembranePotential) + lifNeuronParameters.membraneResistance * synapseCurrent[index])
-                / lifNeuronParameters.membraneLeak) * simulationParameters.dt;
+        lifNeuronArray.deltaVoltage[index] = ((-(lifNeuronArray.voltage[index] - lifNeuronParameters.restMembranePotential) + lifNeuronParameters.membraneResistance * synapseCurrent[index]) / lifNeuronParameters.membraneLeak) * simulationParameters.dt;
 
         lifNeuronArray.voltage[index] = lifNeuronArray.deltaVoltage[index] + lifNeuronArray.voltage[index];
     }
@@ -245,7 +243,7 @@ public class SNN {
         Random rng = new Random();
 
         int gridSize = (int) Math.sqrt(simulationParameters.neurons);
-        double lambda = 0.1;
+        double lambda = params.lambda();
 
         for (int presynaptic = 0; presynaptic < simulationParameters.neurons; presynaptic++) {
 
@@ -278,13 +276,13 @@ public class SNN {
      */
     private void determineIfSynapseConnectionShouldBeMade(double[][] synapses, Random rng, double connectionProbability, int presynaptic, int postsynaptic, double distance) {
         // Pas laterale inhibitie toe wanneer de neuronen dicht bij elkaar zitten.
-        if (distance <= lateralInhibitionRadius) {
+        if (enableLateralInhibition && distance <= lateralInhibitionRadius) {
             synapses[presynaptic][postsynaptic] = -lateralInhibitionStrength;
         } else if (rng.nextDouble() < connectionProbability) {
             // Als een neuron inhiberend is, gebruik een negatieve waarde:
             synapses[presynaptic][postsynaptic] = synapseArray.isInhibitory[presynaptic] ?
                     //     -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 1;
-                    -rng.nextDouble() * 3.1 - 1 : rng.nextDouble() * 10;
+                    -rng.nextDouble() * params.inhibitoryStrength() : rng.nextDouble() * params.excitatoryStrength();
 
 
             synapses[presynaptic][postsynaptic] *= connectionProbability;
