@@ -24,10 +24,10 @@ public class StatusReporter {
             averageFiringRate = (double) outputNeuronSpikes / outputNeuronCount / (snn.simulationParameters.simulationTime / 1000.0);
         }
 
-        System.out.println("\n Simulation Report:");
+        System.out.println("\nSimulation Report:");
         System.out.println("Real time duration: " + duration + " ms");
         System.out.println("Simulation time: " + snn.simulationParameters.simulationTime + " ms");
-        System.out.println("\n Output neuron statistics:");
+        System.out.println("\nOutput neuron statistics:");
         System.out.println("Total spikes (output neurons): " + outputNeuronSpikes);
         System.out.printf("Average firing rate (output neurons): %.2f Hz%n", averageFiringRate);
     }

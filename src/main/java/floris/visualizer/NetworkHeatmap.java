@@ -18,9 +18,9 @@ public class NetworkHeatmap {
 
     private enum NeuronType {
         INPUT(new Color(33, 225, 33), Color.GREEN),
-        OUTPUT(Color.BLUE, Color.CYAN),
+        OUTPUT(new Color(22, 54, 226), Color.RED),
         INHIBITORY(new Color(255, 0, 0), Color.RED),
-        EXCITATORY(Color.DARK_GRAY, Color.YELLOW);
+        EXCITATORY(new Color(105, 105, 105), Color.YELLOW);
 
         final Color restColor;
         final Color spikeColor;
@@ -103,7 +103,7 @@ public class NetworkHeatmap {
                                  int neuronIndex, boolean isSpiking) {
         g.setColor(isSpiking ? Color.BLACK : Color.WHITE);
 
-        String voltage = String.format("%.2f", currentVoltages[neuronIndex]);
+        String voltage = String.format("%.1f", currentVoltages[neuronIndex]);
         FontMetrics fm = g.getFontMetrics();
         int textX = x + (width - fm.stringWidth(voltage)) / 2;
         int textY = y + (height - fm.getHeight()) / 2 + fm.getAscent();

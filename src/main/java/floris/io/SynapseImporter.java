@@ -3,11 +3,9 @@ package floris.io;
 import floris.config.NetworkParameters;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
-import java.util.Scanner;
 import java.util.function.Function;
 
 public class SynapseImporter {
@@ -49,8 +47,8 @@ public class SynapseImporter {
             int inputNeurons = Integer.parseInt(getRequiredProperty.apply("input_neurons"));
             int outputNeurons = Integer.parseInt(getRequiredProperty.apply("output_neurons"));
             int inhibitoryNeurons = Integer.parseInt(getRequiredProperty.apply("inhibitory_neurons"));
-            boolean enableSTDP = Boolean.parseBoolean(getRequiredProperty.apply("enable_STDP"));
-            boolean enableLateralInhibition = Boolean.parseBoolean(getRequiredProperty.apply("enable_Lateral_Inhibition"));
+            boolean enableSTDP = Boolean.parseBoolean("enable_STDP");
+            boolean enableLateralInhibition = Boolean.parseBoolean("enable_Lateral_Inhibition");
             String imagePath = props.getProperty("image_path", "");
             double maxFiringRateHz = Double.parseDouble(props.getProperty("max_firing_rate", "0.0"));
             boolean writeSpikeOutputCsv = Boolean.parseBoolean(props.getProperty("write_spike_output_csv", "false"));

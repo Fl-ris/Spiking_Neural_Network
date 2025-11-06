@@ -6,13 +6,13 @@ A spiking neural network (SNN) written in Java
 Spiking neural networks (SNNs) are members of the third generation of artificial neural networks. 
 Unlike previous generations of neural networks, SNNs allow for temporal data processing and their sparse activity, like that of the biological brain, makes them more energy efficient compared to LLMs, perceptrons etc.
 
-The code in this repository implements a leaky‑integrate‑and‑fire (LIF) neuron, optional spike‑timing‑dependent plasticity (STDP), and a simple lateral‑inhibition. All of the dynamics are expressed with ordinary differential equations that are integrated with a fixed time step (`dt`).  The whole simulator is written in Java.
+The code in this repository implements a leaky‑integrate‑and‑fire (LIF) neuron, optional Spike Timing Dependent plasticity (STDP), and a simple lateral‑inhibition. All of the dynamics are expressed with ordinary differential equations that are integrated with a fixed time step (`dt`).  The whole simulator is written in Java.
 
 ---
 
 ## 2. Usage: ##
 
-The simulator accepts a handful of numbered options. All of them have defaults, so you can launch the program without any arguments.
+The simulator accepts a handful of options. All of them have defaults, so you can launch the program without any arguments.
 
 ## 3. Commandline arguments: ##
 
@@ -30,7 +30,7 @@ The simulator accepts a handful of numbered options. All of them have defaults, 
 
 `--inhibitory-neurons`: how many of the hidden cells are inhibitory (default 1000).  
 
-`--config-file <path>`: a `.properties` file that contains all of the arguments.  When present, individual flags are ignored when this is used.
+`--config-file <path>`: a `.properties` file that contains all of the arguments. When present, individual flags are ignored when this is used.
 
 `--enable-STDP`: turn on spike‑timing‑dependent plasticity (default disabled).  
 
@@ -87,6 +87,7 @@ enable_heatmap=false
 The config directory contains several example configuration files that can be used with the `--config-file` command-line option.
 Each config file demonstrates a different usecase (or network size).
 
+Example: `java -Xms64000m -jar build/libs/Spiking_Neural_Network-1.2-SNAPSHOT-all.jar --config-file config/small_brain_1.conf`
 
 *   `small_brain_1.conf`: A configuration for a small-sized network.
 *   `medium_brain_1.conf`: A configuration for a medium-sized network.
@@ -105,7 +106,7 @@ Each config file demonstrates a different usecase (or network size).
 
 **Inhibitory placement**: a user defined percentage of the hidden neurons are randomly flagged as inhibitory.
 
-**Synapse connections**: populateArrays walks through every ordered pair of neurons, computes a Euclidean distance on a 2D grid, and draws a connection with probability `exp(-lambda*distance)`. Near neighbours may receive a pre‑computed negative weight when lateral inhibition is on. The weight is scaled by the same probability, so long‑range connections are typically weak.  
+**Synapse connections**: populateArrays walks through every ordered pair of neurons, computes a Euclidean distance on a 2D grid, and draws a connection with probability `exp(-lambda*distance)`. Near neighbours can receive a negative weight when lateral inhibition is on. The weight is scaled by the same probability, so long-range connections are typically weak.  
 
 ### 5.2  The per‑step loop:
 
@@ -120,13 +121,13 @@ Each config file demonstrates a different usecase (or network size).
 **Learning**: If STDP is active, the current spike triggers a weight update for all presynaptic neurons that have spiked recently (potentiation) and for all postsynaptic targets that spiked shortly before (depression). The update respects upper and lower bounds defined in StdpParameters.
 
 **Propagation**: After the whole population has been examined, propagateSpike adds the outgoing synaptic weight of each firing neuron to the input accumulator of every postsynaptic neuron. Because the weight matrix is dense, propagation is O(N^2).
-**Decay**: The synaptic current on each cell decays exponentially with a time constant tauSyn. This models the finite duration of post‑synaptic potentials.
+**Decay**: The synaptic current on each cell decays exponentially with a time constant tauSyn.
 
-**Threshold relaxation**: The adaptive threshold slowly contracts back toward its baseline (thresholdDecay).  
+**Threshold relaxation**: The adaptive threshold slowly moves back toward its baseline (thresholdDecay).  
 
 All of the above steps are repeated `simulationSteps = simulationTime / dt` times. The visualiser is refreshed after every iteration, producing an animation of spiking activity.
 
----  
+---
 
 ## 6.  Visualisation details and interpretation  
 
